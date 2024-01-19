@@ -1,6 +1,6 @@
-name: CI
+name: test_and_build
 
-on: 
+on:
   push:
     branches:
       - '**'
@@ -10,7 +10,7 @@ on:
   workflow_call:
 
 jobs:
-  test_and_build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,17 +39,26 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build and prepare for a potential 'npm publish'
-        run: gulp npm-prepare
+      - name: Lint
+        run: gulp lint
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Package artifact for upload
-        run: tar -czvf artifact.tar.gz dist
-        shell: bash
-
-      - uses: actions/upload-artifact@v3
+      - name: Set up node.js
+        uses: actions/setup-node@v3.3.0
         with:
-          path: |
-            ${{ github.workspace }}/artifact.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+          node-version-file: .nvmrc
+
+      - name: Build for Production
+        run: gulp build-prod
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
 
