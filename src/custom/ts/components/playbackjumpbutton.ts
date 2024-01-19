@@ -16,7 +16,7 @@ export class PlaybackJumpButtons extends Button<PlaybackJumpButtonsConfig> {
       cssClass: 'ui-playbackjumpbuttons',
       text: config.text,
       ariaLabel: config.ariaLabel,
-      skipTime: 0
+      skipTime: 0,
     }, this.config);
   }
 
@@ -42,7 +42,7 @@ export class PlaybackForwardButton extends PlaybackJumpButtons {
       ...config,
       cssClass: 'ui-playbackforwardbutton',
       text: i18n.getLocalizer('forward'),
-      ariaLabel: i18n.getLocalizer('forward')
+      ariaLabel: i18n.getLocalizer('forward'),
     });
   }
 }
@@ -53,7 +53,7 @@ export class PlaybackRewindButton extends PlaybackJumpButtons {
       ...config,
       cssClass: 'ui-playbackrewindbutton',
       text: i18n.getLocalizer('rewind'),
-      ariaLabel: i18n.getLocalizer('rewind')
+      ariaLabel: i18n.getLocalizer('rewind'),
     });
   }
 }
