@@ -46,8 +46,8 @@ var paths = {
   source: {
     html: ['./src/html/*.html'],
     tsmain: ['./src/ts/main.ts'],
-    ts: ['./src/ts/**/*.ts'],
-    sass: ['./src/scss/**/*.scss'],
+    ts: ['./src/ts/**/*.ts', './src/custom/ts/**/*.ts'],
+    sass: ['./src/scss/**/*.scss', './src/custom/scss/**/*.scss'],
     json: ['./src/ts/**/*.json']
   },
   target: {

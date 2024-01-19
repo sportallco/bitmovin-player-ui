@@ -1,0 +1,29 @@
+@mixin playback-button-common($position, $side, $image-url) {
+  @extend %ui-button;
+
+  position: absolute;
+  top: 50%;
+  #{$side}: $position;
+
+  background-image: url($image-url);
+
+  &:hover {
+    @include svg-icon-shadow;
+  }
+
+  &.#{$prefix}-player-state-playing,
+  &.#{$prefix}-player-state-ad-playing,
+  &.#{$prefix}-player-state-live {
+    // custom style here
+  }
+}
+
+.#{$prefix}-ui-playbackforwardbutton {
+  @include playback-button-common(35%, right, '../../assets/skin-modern/images/fast-forward.svg');
+}
+
+.#{$prefix}-ui-playbackrewindbutton {
+  @include playback-button-common(35%, left, '../../assets/skin-modern/images/fast-rewind.svg');
+}
+
+

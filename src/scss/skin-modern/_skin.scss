@@ -48,6 +48,9 @@
 @import 'skin-smallscreen';
 @import 'skin-tv';
 
+// CUSTOM STYLES
+@import '../../custom/scss/skin-modern/custom-skin';
+
 .#{$prefix}-ui-uicontainer {
   color: $color-primary;
   font-family: $font-family;

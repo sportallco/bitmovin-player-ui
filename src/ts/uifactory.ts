@@ -1,3 +1,4 @@
+import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
 import { SettingsPanelPage } from './components/settingspanelpage';
 import { SettingsPanelItem } from './components/settingspanelitem';
@@ -150,6 +151,7 @@ export namespace UIFactory {
         subtitleOverlay,
         new BufferingOverlay(),
         new PlaybackToggleOverlay(),
+        new PlaybackJumpControlsOverlay(),
         new CastStatusOverlay(),
         controlBar,
         new TitleBar(),
