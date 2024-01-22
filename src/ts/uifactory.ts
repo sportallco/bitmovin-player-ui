@@ -1,3 +1,4 @@
+import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
 import { SettingsPanelPage } from './components/settingspanelpage';
@@ -137,6 +138,7 @@ export namespace UIFactory {
             new PictureInPictureToggleButton(),
             new AirPlayToggleButton(),
             new CastToggleButton(),
+            new RadioModeToggleButton(),
             new VRToggleButton(),
             new SettingsToggleButton({ settingsPanel: settingsPanel }),
             new FullscreenToggleButton(),
@@ -277,6 +279,7 @@ export namespace UIFactory {
         new BufferingOverlay(),
         new CastStatusOverlay(),
         new PlaybackToggleOverlay(),
+        new PlaybackJumpControlsOverlay(),
         new RecommendationOverlay(),
         controlBar,
         new TitleBar({
@@ -286,9 +289,9 @@ export namespace UIFactory {
             new VRToggleButton(),
             new PictureInPictureToggleButton(),
             new AirPlayToggleButton(),
+            new RadioModeToggleButton(),
             new VolumeToggleButton(),
             new SettingsToggleButton({ settingsPanel: settingsPanel }),
-            new FullscreenToggleButton(),
           ],
         }),
         settingsPanel,
