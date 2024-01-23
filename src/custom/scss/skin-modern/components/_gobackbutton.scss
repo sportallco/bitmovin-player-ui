@@ -1,0 +1,9 @@
+.#{$prefix}-ui-gobackbutton {
+  @extend %ui-button;
+
+  &:hover {
+    @include svg-icon-shadow;
+  }
+
+  background-image: url("../../assets/skin-modern/images/arrowdown.svg");
+}

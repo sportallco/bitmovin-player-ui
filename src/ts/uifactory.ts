@@ -1,3 +1,4 @@
+import { GoBackButton } from './../custom/ts/components/gobackbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
@@ -267,6 +268,7 @@ export namespace UIFactory {
             new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.CurrentTime, hideInLivePlayback: true }),
             new SeekBar({ label: new SeekBarLabel() }),
             new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.TotalTime, cssClasses: ['text-right'] }),
+            new FullscreenToggleButton({ cssClasses: ['controlbar-fullscreen-toggle-button']}),
           ],
           cssClasses: ['controlbar-top'],
         }),
@@ -284,13 +286,13 @@ export namespace UIFactory {
         controlBar,
         new TitleBar({
           components: [
+            new GoBackButton(),
             new MetadataLabel({ content: MetadataLabelContent.Title }),
             new CastToggleButton(),
             new VRToggleButton(),
             new PictureInPictureToggleButton(),
             new AirPlayToggleButton(),
             new RadioModeToggleButton(),
-            new VolumeToggleButton(),
             new SettingsToggleButton({ settingsPanel: settingsPanel }),
           ],
         }),

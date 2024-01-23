@@ -19,11 +19,11 @@
 }
 
 .#{$prefix}-ui-playbackforwardbutton {
-  @include playback-button-common(35%, right, '../../assets/skin-modern/images/fast-forward.svg');
+  @include playback-button-common(35%, right, '../../assets/skin-modern/images/forward.svg');
 }
 
 .#{$prefix}-ui-playbackrewindbutton {
-  @include playback-button-common(35%, left, '../../assets/skin-modern/images/fast-rewind.svg');
+  @include playback-button-common(35%, left, '../../assets/skin-modern/images/rewind.svg');
 }
 
 

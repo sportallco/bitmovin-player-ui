@@ -14,3 +14,8 @@
     background-image: url('../../assets/skin-modern/images/fullscreenX.svg');
   }
 }
+
+.#{$prefix}-controlbar-fullscreen-toggle-button {
+  padding: 0;
+  height: 1em;
+}
