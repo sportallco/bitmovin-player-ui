@@ -1,27 +1,12 @@
-@import 'components/playbackjumpcontrolsoverlay';
-@import 'components/radiomodetogglebutton';
-@import 'components/gobackbutton';
 
-.#{$prefix}-ui-uicontainer {
-  &.#{$prefix}-player-state-idle {
-    .#{$prefix}-ui-playbackforwardbutton,
-    .#{$prefix}-ui-playbackrewindbutton {
-      display: none;
-    }
-  }
+.#{$prefix}-ui-skin-smallscreen {
 
-  &.#{$prefix}-player-state-finished {
-    .#{$prefix}-ui-playbackforwardbutton,
-    .#{$prefix}-ui-playbackrewindbutton {
-      display: none;
-    }
-  }
-
+  // Adjustments for screen width x <= 400
   &.#{$prefix}-layout-max-width-400 {
     .#{$prefix}-ui-playbackforwardbutton,
     .#{$prefix}-ui-playbackrewindbutton {
-      top: 43%;
-      font-size: 1em;
+      font-size: 1.2em;
+      top: 42%;
     }
 
     .#{$prefix}-ui-playbackforwardbutton {
@@ -33,6 +18,7 @@
     }
   }
 
+  // Adjustments for screen width 400 < x <= 600
   &.#{$prefix}-layout-max-width-600 {
     .#{$prefix}-ui-playbackforwardbutton,
     .#{$prefix}-ui-playbackrewindbutton {
@@ -46,5 +32,12 @@
     .#{$prefix}-ui-playbackrewindbutton {
       left: 20%;
     }
+  }
+
+  // Adjustments for screen width x <= 600
+  // sass-lint:disable no-empty-rulesets
+  &.#{$prefix}-layout-max-width-400,
+  &.#{$prefix}-layout-max-width-600 {
+    // none yet
   }
 }

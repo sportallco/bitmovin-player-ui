@@ -1,6 +1,9 @@
 @import 'variables';
 @import 'mixins';
 
+// CUSTOM STYLES
+@import '../../custom/scss/skin-modern/custom-smallscreen-skin';
+
 .#{$prefix}-ui-skin-smallscreen {
   font-size: 1.2em;
 

@@ -1,8 +1,10 @@
 @mixin playback-button-common($position, $side, $image-url) {
+  font-size: 1.5em;
+
   @extend %ui-button;
 
   position: absolute;
-  top: 50%;
+  top: 47%;
   #{$side}: $position;
 
   background-image: url($image-url);
@@ -19,11 +21,9 @@
 }
 
 .#{$prefix}-ui-playbackforwardbutton {
-  @include playback-button-common(35%, right, '../../assets/skin-modern/images/forward.svg');
+  @include playback-button-common(25%, right, '../../assets/skin-modern/images/forward.svg');
 }
 
 .#{$prefix}-ui-playbackrewindbutton {
-  @include playback-button-common(35%, left, '../../assets/skin-modern/images/rewind.svg');
+  @include playback-button-common(25%, left, '../../assets/skin-modern/images/rewind.svg');
 }
-
-
