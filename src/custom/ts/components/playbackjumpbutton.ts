@@ -2,6 +2,8 @@ import { Button, ButtonConfig } from '../../../ts/components/button';
 import { UIInstanceManager } from '../../../ts/uimanager';
 import { PlayerAPI } from 'bitmovin-player';
 import { i18n } from '../../../ts/localization/i18n';
+import { PlayerUtils } from '../../../ts/playerutils';
+import LiveStreamDetectorEventArgs = PlayerUtils.LiveStreamDetectorEventArgs;
 
 export interface PlaybackJumpButtonsConfig extends ButtonConfig {
   skipTime: number; // in seconds
@@ -23,6 +25,16 @@ export class PlaybackJumpButtons extends Button<PlaybackJumpButtonsConfig> {
   configure(player: PlayerAPI, uimanager: UIInstanceManager): void {
     super.configure(player, uimanager);
 
+    let liveStreamDetector = new PlayerUtils.LiveStreamDetector(player, uimanager);
+    liveStreamDetector.onLiveChanged.subscribe((sender, args: LiveStreamDetectorEventArgs) => {
+      if (player.isLive()) {
+        this.hide();
+      } else {
+        this.show();
+      }
+    });
+    liveStreamDetector.detect();
+
     this.onClick.subscribe(() => {
       const currentTime = player.getCurrentTime();
       const duration = player.getDuration();
@@ -32,6 +44,14 @@ export class PlaybackJumpButtons extends Button<PlaybackJumpButtonsConfig> {
         newTime = Math.max(0, Math.min(newTime, duration));
         player.seek(newTime, 'ui');
       }
+    });
+
+    uimanager.onControlsShow.subscribe(() => {
+      this.show();
+    });
+
+    uimanager.onControlsHide.subscribe(() => {
+      this.hide();
     });
   }
 }
