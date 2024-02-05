@@ -2,6 +2,8 @@
 @import 'components/radiomodetogglebutton';
 @import 'components/gobackbutton';
 
+@import '../skin-modern/ui-skin-radio';
+
 .#{$prefix}-ui-uicontainer {
   &.#{$prefix}-player-state-idle {
     .#{$prefix}-ui-playbackforwardbutton,

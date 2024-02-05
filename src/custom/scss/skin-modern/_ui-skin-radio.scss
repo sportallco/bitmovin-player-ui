@@ -1,0 +1,17 @@
+.#{$prefix}-ui-skin-radio {
+    .#{$prefix}-ui-seekbar {
+      height: auto;
+    }
+
+    .#{$prefix}-ui-controlbar {
+      line-height: auto;
+      padding: inherit;
+
+      .#{$prefix}-controlbar-top,
+      .#{$prefix}-controlbar-bottom {
+        > .#{$prefix}-container-wrapper {
+          margin: inherit;
+        }
+      }
+    }
+}

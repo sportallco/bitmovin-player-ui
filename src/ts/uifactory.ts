@@ -528,4 +528,51 @@ export namespace UIFactory {
       spatialNavigation: spatialNavigation,
     };
   }
+
+    export function modernRadioModeUi() {
+      return new UIContainer({
+        components: [
+          new ControlBar({
+            components: [
+              new Container({
+                components: [
+                  new PlaybackToggleButton(),
+                  new SeekBar({ label: new SeekBarLabel() }),
+                  new RadioModeToggleButton(),
+                ],
+                cssClasses: ['controlbar-top'],
+              }),
+            ],
+          }),
+          new TitleBar({
+            components: [
+              new Container({
+                components: [
+                  new MetadataLabel({ content: MetadataLabelContent.Title }),
+                ],
+                cssClasses: ['ui-titlebar-top'],
+              }),
+            ],
+          }),
+          new ErrorMessageOverlay(),
+        ],
+        cssClasses: ['ui-skin-radio'],
+        hideDelay: -1,
+      });
+    }
+
+    export function buildModernRadioModeUI(
+      player: PlayerAPI,
+      config: UIConfig = {},
+    ): UIManager {
+      return new UIManager(
+        player,
+        [
+          {
+            ui: modernRadioModeUi(),
+          },
+        ],
+        config,
+      );
+    }
 }
