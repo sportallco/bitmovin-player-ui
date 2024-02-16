@@ -54,21 +54,45 @@ import { SpatialNavigation } from './spatialnavigation/spatialnavigation';
 import { RootNavigationGroup } from './spatialnavigation/rootnavigationgroup';
 import { ListNavigationGroup, ListOrientation } from './spatialnavigation/ListNavigationGroup';
 
-export namespace UIFactory {
+declare global {
+  interface Window {
+    bitmovin: any;
+  }
+}
 
-  export function buildDefaultUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
+let uiManager: UIManager;
+let playerApi: PlayerAPI;
+let uiConfig: UIConfig;
+
+export namespace UIFactory {
+  export function buildDefaultUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
     return UIFactory.buildModernUI(player, config);
   }
 
-  export function buildDefaultSmallScreenUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
-    return UIFactory.buildModernSmallScreenUI(player, config);
+  export function buildDefaultSmallScreenUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
+    uiConfig = config;
+    playerApi = player;
+    uiManager = UIFactory.buildModernSmallScreenUI(player, config);
+    return uiManager;
   }
 
-  export function buildDefaultCastReceiverUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
+  export function buildDefaultCastReceiverUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
     return UIFactory.buildModernCastReceiverUI(player, config);
   }
 
-  export function buildDefaultTvUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
+  export function buildDefaultTvUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
     return UIFactory.buildModernTvUI(player, config);
   }
 
@@ -77,17 +101,27 @@ export namespace UIFactory {
 
     let mainSettingsPanelPage = new SettingsPanelPage({
       components: [
-        new SettingsPanelItem(i18n.getLocalizer('settings.video.quality'), new VideoQualitySelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('speed'), new PlaybackSpeedSelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('settings.audio.track'), new AudioTrackSelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('settings.audio.quality'), new AudioQualitySelectBox()),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.video.quality'),
+          new VideoQualitySelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('speed'),
+          new PlaybackSpeedSelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.audio.track'),
+          new AudioTrackSelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.audio.quality'),
+          new AudioQualitySelectBox(),
+        ),
       ],
     });
 
     let settingsPanel = new SettingsPanel({
-      components: [
-        mainSettingsPanelPage,
-      ],
+      components: [mainSettingsPanelPage],
       hidden: true,
     });
 
@@ -115,7 +149,8 @@ export namespace UIFactory {
         {
           role: 'menubar',
         },
-      ));
+      ),
+    );
 
     settingsPanel.addComponent(subtitleSettingsPanelPage);
 
@@ -124,9 +159,15 @@ export namespace UIFactory {
         settingsPanel,
         new Container({
           components: [
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.CurrentTime, hideInLivePlayback: true }),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
+              hideInLivePlayback: true,
+            }),
             new SeekBar({ label: new SeekBarLabel() }),
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.TotalTime, cssClasses: ['text-right'] }),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.TotalTime,
+              cssClasses: ['text-right'],
+            }),
           ],
           cssClasses: ['controlbar-top'],
         }),
@@ -179,7 +220,9 @@ export namespace UIFactory {
         new PlaybackToggleOverlay(),
         new Container({
           components: [
-            new AdMessageLabel({ text: i18n.getLocalizer('ads.remainingTime')}),
+            new AdMessageLabel({
+              text: i18n.getLocalizer('ads.remainingTime'),
+            }),
             new AdSkipButton(),
           ],
           cssClass: 'ui-ads-status',
@@ -214,17 +257,27 @@ export namespace UIFactory {
 
     let mainSettingsPanelPage = new SettingsPanelPage({
       components: [
-        new SettingsPanelItem(i18n.getLocalizer('settings.video.quality'), new VideoQualitySelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('speed'), new PlaybackSpeedSelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('settings.audio.track'), new AudioTrackSelectBox()),
-        new SettingsPanelItem(i18n.getLocalizer('settings.audio.quality'), new AudioQualitySelectBox()),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.video.quality'),
+          new VideoQualitySelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('speed'),
+          new PlaybackSpeedSelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.audio.track'),
+          new AudioTrackSelectBox(),
+        ),
+        new SettingsPanelItem(
+          i18n.getLocalizer('settings.audio.quality'),
+          new AudioQualitySelectBox(),
+        ),
       ],
     });
 
     let settingsPanel = new SettingsPanel({
-      components: [
-        mainSettingsPanelPage,
-      ],
+      components: [mainSettingsPanelPage],
       hidden: true,
       pageTransitionAnimation: false,
       hideDelay: -1,
@@ -254,21 +307,32 @@ export namespace UIFactory {
         {
           role: 'menubar',
         },
-      ));
+      ),
+    );
 
     settingsPanel.addComponent(subtitleSettingsPanelPage);
 
     settingsPanel.addComponent(new CloseButton({ target: settingsPanel }));
-    subtitleSettingsPanelPage.addComponent(new CloseButton({ target: settingsPanel }));
+    subtitleSettingsPanelPage.addComponent(
+      new CloseButton({ target: settingsPanel }),
+    );
 
     let controlBar = new ControlBar({
       components: [
         new Container({
           components: [
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.CurrentTime, hideInLivePlayback: true }),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
+              hideInLivePlayback: true,
+            }),
             new SeekBar({ label: new SeekBarLabel() }),
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.TotalTime, cssClasses: ['text-right'] }),
-            new FullscreenToggleButton({ cssClasses: ['controlbar-fullscreen-toggle-button']}),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.TotalTime,
+              cssClasses: ['text-right'],
+            }),
+            new FullscreenToggleButton({
+              cssClasses: ['controlbar-fullscreen-toggle-button'],
+            }),
           ],
           cssClasses: ['controlbar-top'],
         }),
@@ -346,9 +410,15 @@ export namespace UIFactory {
       components: [
         new Container({
           components: [
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.CurrentTime, hideInLivePlayback: true }),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
+              hideInLivePlayback: true,
+            }),
             new SeekBar({ smoothPlaybackPositionUpdateIntervalMs: -1 }),
-            new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.TotalTime, cssClasses: ['text-right'] }),
+            new PlaybackTimeLabel({
+              timeLabelMode: PlaybackTimeLabelMode.TotalTime,
+              cssClasses: ['text-right'],
+            }),
           ],
           cssClasses: ['controlbar-top'],
         }),
@@ -375,57 +445,113 @@ export namespace UIFactory {
     });
   }
 
-  export function buildModernUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
+  export function buildModernUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
     // show smallScreen UI only on mobile/handheld devices
     let smallScreenSwitchWidth = 600;
 
-    return new UIManager(player, [{
-      ui: modernSmallScreenAdsUI(),
-      condition: (context: UIConditionContext) => {
-        return context.isMobile && context.documentWidth < smallScreenSwitchWidth && context.isAd
-          && context.adRequiresUi;
-      },
-    }, {
-      ui: modernAdsUI(),
-      condition: (context: UIConditionContext) => {
-        return context.isAd && context.adRequiresUi;
-      },
-    }, {
-      ui: modernSmallScreenUI(),
-      condition: (context: UIConditionContext) => {
-        return !context.isAd && !context.adRequiresUi && context.isMobile
-          && context.documentWidth < smallScreenSwitchWidth;
-      },
-    }, {
-      ui: modernUI(),
-      condition: (context: UIConditionContext) => {
-        return !context.isAd && !context.adRequiresUi;
-      },
-    }], config);
+    return new UIManager(
+      player,
+      [
+        {
+          ui: modernSmallScreenAdsUI(),
+          condition: (context: UIConditionContext) => {
+            return (
+              context.isMobile &&
+              context.documentWidth < smallScreenSwitchWidth &&
+              context.isAd &&
+              context.adRequiresUi
+            );
+          },
+        },
+        {
+          ui: modernAdsUI(),
+          condition: (context: UIConditionContext) => {
+            return context.isAd && context.adRequiresUi;
+          },
+        },
+        {
+          ui: modernSmallScreenUI(),
+          condition: (context: UIConditionContext) => {
+            return (
+              !context.isAd &&
+              !context.adRequiresUi &&
+              context.isMobile &&
+              context.documentWidth < smallScreenSwitchWidth
+            );
+          },
+        },
+        {
+          ui: modernUI(),
+          condition: (context: UIConditionContext) => {
+            return !context.isAd && !context.adRequiresUi;
+          },
+        },
+      ],
+      config,
+    );
   }
 
-  export function buildModernSmallScreenUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
-    return new UIManager(player, [{
-      ui: modernSmallScreenAdsUI(),
-      condition: (context: UIConditionContext) => {
-        return context.isAd && context.adRequiresUi;
-      },
-    }, {
-      ui: modernSmallScreenUI(),
-      condition: (context: UIConditionContext) => {
-        return !context.isAd && !context.adRequiresUi;
-      },
-    }], config);
+  export function buildModernSmallScreenUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
+    if (window.bitmovin.customMessageHandler) {
+      window.bitmovin.customMessageHandler.on(
+        'radioModeChanged',
+        (data?: string) => {
+          const { activated } = JSON.parse(data) || { activated: false };
+          uiManager.release();
+
+          uiManager = activated
+            ? UIFactory.buildModernRadioModeUI(player, uiConfig)
+            : UIFactory.buildModernSmallScreenUI(player, uiConfig);
+        },
+      );
+    }
+
+    return new UIManager(
+      player,
+      [
+        {
+          ui: modernSmallScreenAdsUI(),
+          condition: (context: UIConditionContext) => {
+            return context.isAd && context.adRequiresUi;
+          },
+        },
+        {
+          ui: modernSmallScreenUI(),
+          condition: (context: UIConditionContext) => {
+            return !context.isAd && !context.adRequiresUi;
+          },
+        },
+      ],
+      config,
+    );
   }
 
-  export function buildModernCastReceiverUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
+  export function buildModernCastReceiverUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
     return new UIManager(player, modernCastReceiverUI(), config);
   }
 
-  export function buildModernTvUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
-        return new UIManager(player, [{
+  export function buildModernTvUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
+    return new UIManager(
+      player,
+      [
+        {
           ...modernTvUI(),
-        }], config);
+        },
+      ],
+      config,
+    );
   }
 
   export function modernTvUI() {
@@ -433,9 +559,7 @@ export namespace UIFactory {
     const subtitleListPanel = new SettingsPanel({
       components: [
         new SettingsPanelPage({
-          components: [
-            new SettingsPanelItem(null, subtitleListBox),
-          ],
+          components: [new SettingsPanelItem(null, subtitleListBox)],
         }),
       ],
       hidden: true,
@@ -445,9 +569,7 @@ export namespace UIFactory {
     const audioTrackListPanel = new SettingsPanel({
       components: [
         new SettingsPanelPage({
-          components: [
-            new SettingsPanelItem(null, audioTrackListBox),
-          ],
+          components: [new SettingsPanelItem(null, audioTrackListBox)],
         }),
       ],
       hidden: true,
@@ -477,9 +599,15 @@ export namespace UIFactory {
           components: [
             new Container({
               components: [
-                new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.CurrentTime, hideInLivePlayback: true }),
+                new PlaybackTimeLabel({
+                  timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
+                  hideInLivePlayback: true,
+                }),
                 seekBar,
-                new PlaybackTimeLabel({ timeLabelMode: PlaybackTimeLabelMode.RemainingTime, cssClasses: ['text-right'] }),
+                new PlaybackTimeLabel({
+                  timeLabelMode: PlaybackTimeLabelMode.RemainingTime,
+                  cssClasses: ['text-right'],
+                }),
               ],
               cssClasses: ['controlbar-top'],
             }),
@@ -497,7 +625,9 @@ export namespace UIFactory {
             }),
             new Container({
               components: [
-                new MetadataLabel({ content: MetadataLabelContent.Description }),
+                new MetadataLabel({
+                  content: MetadataLabelContent.Description,
+                }),
                 subtitleListPanel,
                 audioTrackListPanel,
               ],
@@ -518,9 +648,23 @@ export namespace UIFactory {
     });
 
     const spatialNavigation = new SpatialNavigation(
-      new RootNavigationGroup(uiContainer, playbackToggleOverlay, seekBar, audioToggleButton, subtitleToggleButton),
-      new ListNavigationGroup(ListOrientation.Vertical, subtitleListPanel, subtitleListBox),
-      new ListNavigationGroup(ListOrientation.Vertical, audioTrackListPanel, audioTrackListBox),
+      new RootNavigationGroup(
+        uiContainer,
+        playbackToggleOverlay,
+        seekBar,
+        audioToggleButton,
+        subtitleToggleButton,
+      ),
+      new ListNavigationGroup(
+        ListOrientation.Vertical,
+        subtitleListPanel,
+        subtitleListBox,
+      ),
+      new ListNavigationGroup(
+        ListOrientation.Vertical,
+        audioTrackListPanel,
+        audioTrackListBox,
+      ),
     );
 
     return {
@@ -529,50 +673,39 @@ export namespace UIFactory {
     };
   }
 
-    export function modernRadioModeUi() {
-      return new UIContainer({
-        components: [
-          new ControlBar({
-            components: [
-              new Container({
-                components: [
-                  new PlaybackToggleButton(),
-                  new SeekBar({ label: new SeekBarLabel() }),
-                  new RadioModeToggleButton(),
-                ],
-                cssClasses: ['controlbar-top'],
-              }),
-            ],
-          }),
-          new TitleBar({
-            components: [
-              new Container({
-                components: [
-                  new MetadataLabel({ content: MetadataLabelContent.Title }),
-                ],
-                cssClasses: ['ui-titlebar-top'],
-              }),
-            ],
-          }),
-          new ErrorMessageOverlay(),
-        ],
-        cssClasses: ['ui-skin-radio'],
-        hideDelay: -1,
-      });
-    }
+  export function modernRadioModeUi() {
+    return new UIContainer({
+      components: [
+        new ControlBar({
+          components: [
+            new Container({
+              components: [
+                new PlaybackToggleButton(),
+                new SeekBar({ label: new SeekBarLabel() }),
+                new RadioModeToggleButton(),
+              ],
+              cssClasses: ['controlbar-top'],
+            }),
+          ],
+        }),
+      ],
+      cssClasses: ['ui-skin-radio'],
+      hideDelay: -1,
+    });
+  }
 
-    export function buildModernRadioModeUI(
-      player: PlayerAPI,
-      config: UIConfig = {},
-    ): UIManager {
-      return new UIManager(
-        player,
-        [
-          {
-            ui: modernRadioModeUi(),
-          },
-        ],
-        config,
-      );
-    }
+  export function buildModernRadioModeUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
+    return new UIManager(
+      player,
+      [
+        {
+          ui: modernRadioModeUi(),
+        },
+      ],
+      config,
+    );
+  }
 }

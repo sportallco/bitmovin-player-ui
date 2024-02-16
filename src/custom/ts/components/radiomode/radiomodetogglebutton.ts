@@ -24,36 +24,52 @@ export class RadioModeToggleButton extends ToggleButton<ToggleButtonConfig> {
   configure(player: PlayerAPI, uimanager: UIInstanceManager): void {
     super.configure(player, uimanager);
 
-    // Écoutez les changements d'état du mode radio
-    this.radioModeController.onChanged.subscribe((_, args) => {
-      console.log(`[RadioModeToggleButton] Radio mode state changed: ${args.activated}`);
-      if (args.activated) {
-        this.on();
-      } else {
-        this.off();
+
+    this.radioModeController.onChanged.subscribe((sender, args) => {
+      if (window.bitmovin.customMessageHandler) {
+        window.bitmovin.customMessageHandler.sendAsynchronous(
+          'radioModeChanged',
+          JSON.stringify({ activated: args.activated }),
+        );
       }
-
-      // Send the current state to the outside (e.g. to the React Native app)
-      window.bitmovin.customMessageHandler.sendAsynchronous('radioModeChanged', JSON.stringify({ activated: args.activated }));
     });
 
-    // Handle clicks on the button
-    this.onClick.subscribe(() => {
-      console.log('[RadioModeToggleButton] Button clicked');
-      this.radioModeController.toggleRadioMode();
+    if (window.bitmovin.customMessageHandler) {
+      window.bitmovin.customMessageHandler.on(
+        'radioModeChanged',
+        (data?: string) => {
+          if (data) {
+            const activated = JSON.parse(data).activated;
+            this.radioModeController.setRadioMode(activated);
+            if (activated) {
+              this.on();
+            } else {
+              this.off();
+            }
+          }
+        },
+      );
 
-      // Send synchronous or asynchronous messages to the outside (e.g. to the React Native app)
-      const result = window.bitmovin.customMessageHandler.sendSynchronous('toggleRadioMode');
-      console.log('Return value from native:', result);
-    });
-
-    if (window.bitmovin && window.bitmovin.customMessageHandler) {
-      window.bitmovin.customMessageHandler.on('toggleRadioMode', (data?: string) => {
+      this.onClick.subscribe(() => {
+        console.log('[RadioModeToggleButton] Button clicked');
         this.radioModeController.toggleRadioMode();
+
+        if (this.radioModeController.isRadioModeActivated()) {
+          this.on();
+        } else {
+          this.off();
+        }
+        window.bitmovin.customMessageHandler.sendAsynchronous(
+          'radioModeChanged',
+          JSON.stringify({
+            before: !this.radioModeController.isRadioModeActivated(),
+            after: this.radioModeController.isRadioModeActivated(),
+            activated: this.radioModeController.isRadioModeActivated(),
+          }),
+        );
       });
     }
 
-    // Initialise l'état du bouton au démarrage
     if (this.radioModeController.isRadioModeActivated()) {
       this.on();
     } else {
