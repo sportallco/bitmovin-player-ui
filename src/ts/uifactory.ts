@@ -500,9 +500,10 @@ export namespace UIFactory {
   ): UIManager {
     if (window.bitmovin.customMessageHandler) {
       window.bitmovin.customMessageHandler.on(
-        'radioModeChanged',
-        (data?: string) => {
-          const { activated } = JSON.parse(data) || { activated: false };
+        'globalRadioModeChanged',
+        (data: string) => {
+          const activated = data === 'true';
+
           uiManager.release();
 
           uiManager = activated
