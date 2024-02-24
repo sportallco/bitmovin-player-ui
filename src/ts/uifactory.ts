@@ -511,6 +511,19 @@ export namespace UIFactory {
             : UIFactory.buildModernSmallScreenUI(player, uiConfig);
         },
       );
+
+      window.bitmovin.customMessageHandler.on(
+        'globalCastModeChanged',
+        (data: string) => {
+          const activated = data === 'true';
+
+          uiManager.release();
+
+          uiManager = activated
+            ? UIFactory.buildModernCastModeUI(player, uiConfig)
+            : UIFactory.buildDefaultSmallScreenUI(player, uiConfig);
+        },
+      );
     }
 
     return new UIManager(
@@ -674,7 +687,7 @@ export namespace UIFactory {
     };
   }
 
-  export function modernRadioModeUi() {
+  export function modernRadioModeUI() {
     return new UIContainer({
       components: [
         new ControlBar({
@@ -703,7 +716,43 @@ export namespace UIFactory {
       player,
       [
         {
-          ui: modernRadioModeUi(),
+          ui: modernRadioModeUI(),
+        },
+      ],
+      config,
+    );
+  }
+
+  export function modernCastModeUI() {
+    return new UIContainer({
+      components: [
+        new ControlBar({
+          components: [
+            new Container({
+              components: [
+                new PlaybackToggleButton(),
+                new SeekBar({ label: new SeekBarLabel() }),
+                new CastToggleButton(),
+              ],
+              cssClasses: ['controlbar-top'],
+            }),
+          ],
+        }),
+      ],
+      cssClasses: ['ui-skin-radio'],
+      hideDelay: -1,
+    });
+  }
+
+  export function buildModernCastModeUI(
+    player: PlayerAPI,
+    config: UIConfig = {},
+  ): UIManager {
+    return new UIManager(
+      player,
+      [
+        {
+          ui: modernCastModeUI(),
         },
       ],
       config,
