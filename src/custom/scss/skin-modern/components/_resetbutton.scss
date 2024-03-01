@@ -1,0 +1,11 @@
+.#{$prefix}-ui-resetbutton {
+  @extend %ui-button;
+
+  &:hover {
+    @include svg-icon-shadow;
+  }
+
+  background-image: url("../../assets/skin-modern/images/reset.svg");
+  padding: 0;
+  font-size: .8em;
+}

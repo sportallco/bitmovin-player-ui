@@ -25,14 +25,25 @@ export class PlaybackJumpButtons extends Button<PlaybackJumpButtonsConfig> {
   configure(player: PlayerAPI, uimanager: UIInstanceManager): void {
     super.configure(player, uimanager);
 
-    let liveStreamDetector = new PlayerUtils.LiveStreamDetector(player, uimanager);
-    liveStreamDetector.onLiveChanged.subscribe((sender, args: LiveStreamDetectorEventArgs) => {
-      if (player.isLive()) {
-        this.hide();
-      } else {
-        this.show();
-      }
-    });
+    let liveStreamDetector = new PlayerUtils.LiveStreamDetector(
+      player,
+      uimanager,
+    );
+    liveStreamDetector.onLiveChanged.subscribe(
+      (sender, args: LiveStreamDetectorEventArgs) => {
+        if (player.isLive()) {
+          this.hide();
+        } else {
+          uimanager.onControlsShow.subscribe(() => {
+            this.show();
+          });
+
+          uimanager.onControlsHide.subscribe(() => {
+            this.hide();
+          });
+        }
+      },
+    );
     liveStreamDetector.detect();
 
     this.onClick.subscribe(() => {
@@ -44,14 +55,6 @@ export class PlaybackJumpButtons extends Button<PlaybackJumpButtonsConfig> {
         newTime = Math.max(0, Math.min(newTime, duration));
         player.seek(newTime, 'ui');
       }
-    });
-
-    uimanager.onControlsShow.subscribe(() => {
-      this.show();
-    });
-
-    uimanager.onControlsHide.subscribe(() => {
-      this.hide();
     });
   }
 }

@@ -1,4 +1,5 @@
 import { GoBackButton } from './../custom/ts/components/gobackbutton';
+import { ResetButton } from './../custom/ts/components/resetbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
@@ -15,7 +16,10 @@ import { SubtitleSettingsLabel } from './components/subtitlesettings/subtitleset
 import { SubtitleSelectBox } from './components/subtitleselectbox';
 import { ControlBar } from './components/controlbar';
 import { Container } from './components/container';
-import { PlaybackTimeLabel, PlaybackTimeLabelMode } from './components/playbacktimelabel';
+import {
+  PlaybackTimeLabel,
+  PlaybackTimeLabelMode,
+} from './components/playbacktimelabel';
 import { SeekBar } from './components/seekbar';
 import { SeekBarLabel } from './components/seekbarlabel';
 import { PlaybackToggleButton } from './components/playbacktogglebutton';
@@ -40,7 +44,10 @@ import { AdClickOverlay } from './components/adclickoverlay';
 import { AdMessageLabel } from './components/admessagelabel';
 import { AdSkipButton } from './components/adskipbutton';
 import { CloseButton } from './components/closebutton';
-import { MetadataLabel, MetadataLabelContent } from './components/metadatalabel';
+import {
+  MetadataLabel,
+  MetadataLabelContent,
+} from './components/metadatalabel';
 import { PlayerUtils } from './playerutils';
 import { Label } from './components/label';
 import { CastUIContainer } from './components/castuicontainer';
@@ -52,7 +59,10 @@ import { SubtitleListBox } from './components/subtitlelistbox';
 import { AudioTrackListBox } from './components/audiotracklistbox';
 import { SpatialNavigation } from './spatialnavigation/spatialnavigation';
 import { RootNavigationGroup } from './spatialnavigation/rootnavigationgroup';
-import { ListNavigationGroup, ListOrientation } from './spatialnavigation/ListNavigationGroup';
+import {
+  ListNavigationGroup,
+  ListOrientation,
+} from './spatialnavigation/ListNavigationGroup';
 
 declare global {
   interface Window {
@@ -321,6 +331,10 @@ export namespace UIFactory {
       components: [
         new Container({
           components: [
+            new ResetButton({
+              text: i18n.getLocalizer('restartbutton'),
+              cssClasses: ['ui-skin-radio'],
+            }),
             new PlaybackTimeLabel({
               timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
               hideInLivePlayback: true,
