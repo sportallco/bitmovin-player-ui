@@ -70,7 +70,7 @@ export interface UIConditionContext {
    * The width of the document where the player/UI is embedded in.
    */
   documentWidth: number;
-  /** 
+  /**
    * Tells if the radio mode is activated or not
    */
   isRadioModeActive: boolean;
@@ -182,11 +182,11 @@ export class UIManager {
         'globalRadioModeChanged',
         (data: string) => {
           const activated = data === 'true';
-          this.isRadioModeActive = activated
+          this.isRadioModeActive = activated;
 
-          this.resolveUiVariant({ isRadioModeActive: activated })
+          this.resolveUiVariant({ isRadioModeActive: activated });
         },
-      )
+      );
     }
 
     /**

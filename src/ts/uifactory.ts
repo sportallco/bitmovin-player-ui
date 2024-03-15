@@ -472,7 +472,7 @@ export namespace UIFactory {
         {
           ui: modernRadioModeUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive
+            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive;
           },
         },
         {
@@ -506,7 +506,7 @@ export namespace UIFactory {
         {
           ui: modernUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive
+            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive;
           },
         },
       ],
@@ -524,7 +524,7 @@ export namespace UIFactory {
         {
           ui: modernRadioModeUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive
+            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive;
           },
         },
         {
