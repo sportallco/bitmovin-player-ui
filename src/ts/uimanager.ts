@@ -70,6 +70,10 @@ export interface UIConditionContext {
    * The width of the document where the player/UI is embedded in.
    */
   documentWidth: number;
+  /** 
+   * Tells if the radio mode is activated or not
+   */
+  isRadioModeActive: boolean;
 }
 
 /**
@@ -111,6 +115,7 @@ export class UIManager {
   private config: InternalUIConfig; // Conjunction of provided uiConfig and sourceConfig from the player
   private managerPlayerWrapper: PlayerWrapper;
   private focusVisibilityTracker: FocusVisibilityTracker;
+  private isRadioModeActive: boolean;
 
   private events = {
     onUiVariantResolve: new EventDispatcher<UIManager, UIConditionContext>(),
@@ -171,6 +176,18 @@ export class UIManager {
       },
       volumeController: new VolumeController(this.managerPlayerWrapper.getPlayer()),
     };
+
+    if (window.bitmovin.customMessageHandler) {
+      window.bitmovin.customMessageHandler.on(
+        'globalRadioModeChanged',
+        (data: string) => {
+          const activated = data === 'true';
+          this.isRadioModeActive = activated
+
+          this.resolveUiVariant({ isRadioModeActive: activated })
+        },
+      )
+    }
 
     /**
      * Gathers configuration data from the UI config and player source config and creates a merged UI config
@@ -325,6 +342,7 @@ export class UIManager {
       this.resolveUiVariant({
         isAd: isAd,
         adRequiresUi: adRequiresUi,
+        isRadioModeActive: this.isRadioModeActive,
       }, (context) => {
         // If this is an ad UI, we need to relay the saved ON_AD_STARTED event data so ad components can configure
         // themselves for the current ad.
@@ -451,6 +469,7 @@ export class UIManager {
       isPlaying: this.player.isPlaying(),
       width: this.uiContainerElement.width(),
       documentWidth: document.body.clientWidth,
+      isRadioModeActive: false,
     };
 
     // Overwrite properties of the default context with passed in context properties

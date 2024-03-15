@@ -190,7 +190,7 @@ export namespace UIFactory {
             new PictureInPictureToggleButton(),
             new AirPlayToggleButton(),
             new CastToggleButton(),
-            new RadioModeToggleButton(),
+            new RadioModeToggleButton({ active: false }),
             new VRToggleButton(),
             new SettingsToggleButton({ settingsPanel: settingsPanel }),
             new FullscreenToggleButton(),
@@ -370,7 +370,7 @@ export namespace UIFactory {
             new VRToggleButton(),
             new PictureInPictureToggleButton(),
             new AirPlayToggleButton(),
-            new RadioModeToggleButton(),
+            new RadioModeToggleButton({ active: false }),
             new SettingsToggleButton({ settingsPanel: settingsPanel }),
           ],
         }),
@@ -470,6 +470,12 @@ export namespace UIFactory {
       player,
       [
         {
+          ui: modernRadioModeUI(),
+          condition: (context: UIConditionContext) => {
+            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive
+          },
+        },
+        {
           ui: modernSmallScreenAdsUI(),
           condition: (context: UIConditionContext) => {
             return (
@@ -493,14 +499,14 @@ export namespace UIFactory {
               !context.isAd &&
               !context.adRequiresUi &&
               context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth
+              context.documentWidth < smallScreenSwitchWidth && !context.isRadioModeActive
             );
           },
         },
         {
           ui: modernUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi;
+            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive
           },
         },
       ],
@@ -512,37 +518,15 @@ export namespace UIFactory {
     player: PlayerAPI,
     config: UIConfig = {},
   ): UIManager {
-    if (window.bitmovin.customMessageHandler) {
-      window.bitmovin.customMessageHandler.on(
-        'globalRadioModeChanged',
-        (data: string) => {
-          const activated = data === 'true';
-
-          uiManager.release();
-
-          uiManager = activated
-            ? UIFactory.buildModernRadioModeUI(player, uiConfig)
-            : UIFactory.buildModernSmallScreenUI(player, uiConfig);
-        },
-      );
-
-      window.bitmovin.customMessageHandler.on(
-        'globalCastModeChanged',
-        (data: string) => {
-          const activated = data === 'true';
-
-          uiManager.release();
-
-          uiManager = activated
-            ? UIFactory.buildModernCastModeUI(player, uiConfig)
-            : UIFactory.buildDefaultSmallScreenUI(player, uiConfig);
-        },
-      );
-    }
-
     return new UIManager(
       player,
       [
+        {
+          ui: modernRadioModeUI(),
+          condition: (context: UIConditionContext) => {
+            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive
+          },
+        },
         {
           ui: modernSmallScreenAdsUI(),
           condition: (context: UIConditionContext) => {
@@ -552,7 +536,7 @@ export namespace UIFactory {
         {
           ui: modernSmallScreenUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi;
+            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive;
           },
         },
       ],
@@ -710,7 +694,7 @@ export namespace UIFactory {
               components: [
                 new PlaybackToggleButton(),
                 new SeekBar({ label: new SeekBarLabel() }),
-                new RadioModeToggleButton(),
+                new RadioModeToggleButton({ active: true }),
               ],
               cssClasses: ['controlbar-top'],
             }),
@@ -731,42 +715,6 @@ export namespace UIFactory {
       [
         {
           ui: modernRadioModeUI(),
-        },
-      ],
-      config,
-    );
-  }
-
-  export function modernCastModeUI() {
-    return new UIContainer({
-      components: [
-        new ControlBar({
-          components: [
-            new Container({
-              components: [
-                new PlaybackToggleButton(),
-                new SeekBar({ label: new SeekBarLabel() }),
-                new CastToggleButton(),
-              ],
-              cssClasses: ['controlbar-top'],
-            }),
-          ],
-        }),
-      ],
-      cssClasses: ['ui-skin-radio'],
-      hideDelay: -1,
-    });
-  }
-
-  export function buildModernCastModeUI(
-    player: PlayerAPI,
-    config: UIConfig = {},
-  ): UIManager {
-    return new UIManager(
-      player,
-      [
-        {
-          ui: modernCastModeUI(),
         },
       ],
       config,
