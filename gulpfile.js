@@ -101,10 +101,7 @@ gulp.task('lint-ts', function() {
     formatter: 'verbose',
     program: program,
   }))
-  .pipe(tslint.report({
-    // Print just the number of errors (instead of printing all errors again)
-    summarizeFailureOutput: true
-  }))
+  .pipe(tslint.report())
 });
 
 // Sass/SCSS linting

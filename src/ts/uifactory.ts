@@ -382,7 +382,7 @@ export namespace UIFactory {
         new RecommendationOverlay(),
         controlBar,
         new TitleBar({
-          components: titleBarComponents
+          components: titleBarComponents,
         }),
         settingsPanel,
         new Watermark(),
@@ -509,8 +509,8 @@ export namespace UIFactory {
               !context.isAd &&
               !context.adRequiresUi &&
               context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth && 
-              !context.isRadioModeActive && 
+              context.documentWidth < smallScreenSwitchWidth &&
+              !context.isRadioModeActive &&
               context.isRadioModeAvailable
             );
           },
@@ -522,8 +522,8 @@ export namespace UIFactory {
               !context.isAd &&
               !context.adRequiresUi &&
               context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth && 
-              !context.isRadioModeActive && 
+              context.documentWidth < smallScreenSwitchWidth &&
+              !context.isRadioModeActive &&
               !context.isRadioModeAvailable
             );
           },

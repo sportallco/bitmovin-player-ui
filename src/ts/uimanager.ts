@@ -189,7 +189,7 @@ export class UIManager {
             const { activated, available } = JSON.parse(data);
             this.isRadioModeActive = activated;
             this.isRadioModeAvailable = available;
-  
+
             this.resolveUiVariant({ isRadioModeActive: activated, isRadioModeAvailable: available });
           },
         );
