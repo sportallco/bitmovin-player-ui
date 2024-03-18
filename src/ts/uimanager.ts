@@ -74,6 +74,10 @@ export interface UIConditionContext {
    * Tells if the radio mode is activated or not
    */
   isRadioModeActive: boolean;
+  /**
+   * Tells if the radio mode is available or not
+   */
+  isRadioModeAvailable: boolean;
 }
 
 /**
@@ -116,6 +120,7 @@ export class UIManager {
   private managerPlayerWrapper: PlayerWrapper;
   private focusVisibilityTracker: FocusVisibilityTracker;
   private isRadioModeActive: boolean;
+  private isRadioModeAvailable: boolean;
 
   private events = {
     onUiVariantResolve: new EventDispatcher<UIManager, UIConditionContext>(),
@@ -176,18 +181,20 @@ export class UIManager {
       },
       volumeController: new VolumeController(this.managerPlayerWrapper.getPlayer()),
     };
-
-    if (window.bitmovin.customMessageHandler) {
-      window.bitmovin.customMessageHandler.on(
-        'globalRadioModeChanged',
-        (data: string) => {
-          const activated = data === 'true';
-          this.isRadioModeActive = activated;
-
-          this.resolveUiVariant({ isRadioModeActive: activated });
-        },
-      );
-    }
+    try {
+      if (window.bitmovin.customMessageHandler) {
+        window.bitmovin.customMessageHandler.on(
+          'globalRadioModeChanged',
+          (data: string) => {
+            const { activated, available } = JSON.parse(data);
+            this.isRadioModeActive = activated;
+            this.isRadioModeAvailable = available;
+  
+            this.resolveUiVariant({ isRadioModeActive: activated, isRadioModeAvailable: available });
+          },
+        );
+      }
+    } catch (error) { }
 
     /**
      * Gathers configuration data from the UI config and player source config and creates a merged UI config
@@ -343,6 +350,7 @@ export class UIManager {
         isAd: isAd,
         adRequiresUi: adRequiresUi,
         isRadioModeActive: this.isRadioModeActive,
+        isRadioModeAvailable: this.isRadioModeAvailable,
       }, (context) => {
         // If this is an ad UI, we need to relay the saved ON_AD_STARTED event data so ad components can configure
         // themselves for the current ad.
@@ -470,6 +478,7 @@ export class UIManager {
       width: this.uiContainerElement.width(),
       documentWidth: document.body.clientWidth,
       isRadioModeActive: false,
+      isRadioModeAvailable: false,
     };
 
     // Overwrite properties of the default context with passed in context properties
