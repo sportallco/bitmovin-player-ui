@@ -8,6 +8,7 @@ import {
   isMobileV3PlayerAPI,
   MobileV3PlayerAPI, MobileV3PlayerErrorEvent, MobileV3PlayerEvent, MobileV3SourceErrorEvent,
 } from '../mobilev3playerapi';
+import { GoBackButton } from '../../custom/ts/components/gobackbutton';
 
 export interface ErrorMessageTranslator {
   (error: ErrorEvent | MobileV3PlayerErrorEvent): string;
@@ -94,7 +95,7 @@ export class ErrorMessageOverlay extends Container<ErrorMessageOverlayConfig> {
 
     this.config = this.mergeConfig(config, {
       cssClass: 'ui-errormessage-overlay',
-      components: [this.tvNoiseBackground, this.errorLabel],
+      components: [this.tvNoiseBackground, this.errorLabel, new GoBackButton({ error: true })],
       hidden: true,
     }, this.config);
   }

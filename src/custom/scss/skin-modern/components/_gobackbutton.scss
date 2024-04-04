@@ -7,3 +7,9 @@
 
   background-image: url("../../assets/skin-modern/images/arrowdown.svg");
 }
+
+.#{$prefix}-ui-gobackbutton-error {
+  @extend %ui-button;
+
+  padding: 2rem;
+}
