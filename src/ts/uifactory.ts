@@ -336,10 +336,10 @@ export namespace UIFactory {
       components: [
         new Container({
           components: [
-            new ResetButton({
+            /* new ResetButton({
               text: i18n.getLocalizer('restartbutton'),
               cssClasses: ['ui-skin-radio'],
-            }),
+            }), */
             new PlaybackTimeLabel({
               timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
               hideInLivePlayback: true,
