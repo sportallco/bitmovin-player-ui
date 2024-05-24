@@ -149,6 +149,9 @@ export class UIManager {
    */
   constructor(player: PlayerAPI, uiVariants: UIVariant[], uiconfig?: UIConfig);
   constructor(player: PlayerAPI, playerUiOrUiVariants: UIContainer | UIVariant[], uiconfig: UIConfig = {}) {
+    this.isRadioModeActive = window.isRadioModeActive
+    this.isRadioModeAvailable = window.isRadioModeAvailable
+
     if (playerUiOrUiVariants instanceof UIContainer) {
       // Single-UI constructor has been called, transform arguments to UIVariant[] signature
       let playerUi = <UIContainer>playerUiOrUiVariants;
@@ -158,8 +161,7 @@ export class UIManager {
       uiVariants.push({ ui: playerUi });
 
       this.uiVariants = uiVariants;
-    }
-    else {
+    } else {
       // Default constructor (UIVariant[]) has been called
       this.uiVariants = <UIVariant[]>playerUiOrUiVariants;
     }
@@ -179,9 +181,12 @@ export class UIManager {
       events: {
         onUpdated: new EventDispatcher<UIManager, void>(),
       },
-      volumeController: new VolumeController(this.managerPlayerWrapper.getPlayer()),
+      volumeController: new VolumeController(
+        this.managerPlayerWrapper.getPlayer(),
+      ),
     };
     try {
+      // Mobile
       if (window.bitmovin.customMessageHandler) {
         window.bitmovin.customMessageHandler.on(
           'globalRadioModeChanged',
@@ -190,11 +195,18 @@ export class UIManager {
             this.isRadioModeActive = activated;
             this.isRadioModeAvailable = available;
 
-            this.resolveUiVariant({ isRadioModeActive: activated, isRadioModeAvailable: available });
+            this.resolveUiVariant({
+              isRadioModeActive: activated,
+              isRadioModeAvailable: available,
+            });
           },
         );
       }
-    } catch (error) { }
+      // Web
+
+      window.addEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange)
+      window.addEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange)
+    } catch (error) {}
 
     /**
      * Gathers configuration data from the UI config and player source config and creates a merged UI config
@@ -202,7 +214,9 @@ export class UIManager {
      */
     const updateConfig = () => {
       const playerSourceConfig = player.getSource() || {};
-      this.config.metadata = JSON.parse(JSON.stringify(uiconfig.metadata || {}));
+      this.config.metadata = JSON.parse(
+        JSON.stringify(uiconfig.metadata || {}),
+      );
 
       // Extract the UI-related config properties from the source config
       const playerSourceUiConfig: UIConfig = {
@@ -218,10 +232,17 @@ export class UIManager {
       // Player source config takes precedence over the UI config, because the config in the source is attached
       // to a source which changes with every player.load, whereas the UI config stays the same for the whole
       // lifetime of the player instance.
-      this.config.metadata.title = playerSourceUiConfig.metadata.title || uiconfig.metadata.title;
-      this.config.metadata.description = playerSourceUiConfig.metadata.description || uiconfig.metadata.description;
-      this.config.metadata.markers = playerSourceUiConfig.metadata.markers || uiconfig.metadata.markers || [];
-      this.config.recommendations = playerSourceUiConfig.recommendations || uiconfig.recommendations || [];
+      this.config.metadata.title =
+        playerSourceUiConfig.metadata.title || uiconfig.metadata.title;
+      this.config.metadata.description =
+        playerSourceUiConfig.metadata.description ||
+        uiconfig.metadata.description;
+      this.config.metadata.markers =
+        playerSourceUiConfig.metadata.markers ||
+        uiconfig.metadata.markers ||
+        [];
+      this.config.recommendations =
+        playerSourceUiConfig.recommendations || uiconfig.recommendations || [];
     };
 
     updateConfig();
@@ -234,7 +255,10 @@ export class UIManager {
 
     const wrappedPlayer = this.managerPlayerWrapper.getPlayer();
 
-    wrappedPlayer.on(this.player.exports.PlayerEvent.SourceLoaded, updateSource);
+    wrappedPlayer.on(
+      this.player.exports.PlayerEvent.SourceLoaded,
+      updateSource,
+    );
 
     // The PlaylistTransition event is only available on Mobile v3 for now.
     // This event is fired when a new source becomes active in the player.
@@ -246,8 +270,10 @@ export class UIManager {
       // Unfortunately "uiContainerElement = new DOM(config.container)" will not accept the container with
       // string|HTMLElement type directly, although it accepts both types, so we need to spit these two cases up here.
       // TODO check in upcoming TS versions if the container can be passed in directly, or fix the constructor
-      this.uiContainerElement = uiconfig.container instanceof HTMLElement ?
-        new DOM(uiconfig.container) : new DOM(uiconfig.container);
+      this.uiContainerElement =
+        uiconfig.container instanceof HTMLElement
+          ? new DOM(uiconfig.container)
+          : new DOM(uiconfig.container);
     } else {
       this.uiContainerElement = new DOM(player.getContainer());
     }
@@ -262,25 +288,34 @@ export class UIManager {
         uiVariantsWithoutCondition.push(uiVariant);
       }
       // Create the instance manager for a UI variant
-      this.uiInstanceManagers.push(new InternalUIInstanceManager(
-        player,
-        uiVariant.ui,
-        this.config,
-        uiVariant.spatialNavigation,
-      ));
+      this.uiInstanceManagers.push(
+        new InternalUIInstanceManager(
+          player,
+          uiVariant.ui,
+          this.config,
+          uiVariant.spatialNavigation,
+        ),
+      );
     }
     // Make sure that there is only one UI variant without a condition
     // It does not make sense to have multiple variants without condition, because only the first one in the list
     // (the one with the lowest index) will ever be selected.
     if (uiVariantsWithoutCondition.length > 1) {
-      throw Error('Too many UIs without a condition: You cannot have more than one default UI');
+      throw Error(
+        'Too many UIs without a condition: You cannot have more than one default UI',
+      );
     }
     // Make sure that the default UI variant, if defined, is at the end of the list (last index)
     // If it comes earlier, the variants with conditions that come afterwards will never be selected because the
     // default variant without a condition always evaluates to 'true'
-    if (uiVariantsWithoutCondition.length > 0
-      && uiVariantsWithoutCondition[0] !== this.uiVariants[this.uiVariants.length - 1]) {
-      throw Error('Invalid UI variant order: the default UI (without condition) must be at the end of the list');
+    if (
+      uiVariantsWithoutCondition.length > 0 &&
+      uiVariantsWithoutCondition[0] !==
+        this.uiVariants[this.uiVariants.length - 1]
+    ) {
+      throw Error(
+        'Invalid UI variant order: the default UI (without condition) must be at the end of the list',
+      );
     }
 
     let adStartedEvent: AdEvent = null; // keep the event stored here during ad playback
@@ -335,7 +370,8 @@ export class UIManager {
         // for now only linear ads can request a UI
         if (ad.isLinear) {
           let linearAd = ad as LinearAd;
-          adRequiresUi = linearAd.uiConfig && linearAd.uiConfig.requestsUi || false;
+          adRequiresUi =
+            (linearAd.uiConfig && linearAd.uiConfig.requestsUi) || false;
         }
       }
 
@@ -346,37 +382,61 @@ export class UIManager {
         this.config.events.onUpdated.dispatch(this);
       }
 
-      this.resolveUiVariant({
-        isAd: isAd,
-        adRequiresUi: adRequiresUi,
-        isRadioModeActive: this.isRadioModeActive,
-        isRadioModeAvailable: this.isRadioModeAvailable,
-      }, (context) => {
-        // If this is an ad UI, we need to relay the saved ON_AD_STARTED event data so ad components can configure
-        // themselves for the current ad.
-        if (context.isAd) {
-          /* Relay the ON_AD_STARTED event to the ads UI
-           *
-           * Because the ads UI is initialized in the ON_AD_STARTED handler, i.e. when the ON_AD_STARTED event has
-           * already been fired, components in the ads UI that listen for the ON_AD_STARTED event never receive it.
-           * Since this can break functionality of components that rely on this event, we relay the event to the
-           * ads UI components with the following call.
-           */
-          this.currentUi.getWrappedPlayer().fireEventInUI(this.player.exports.PlayerEvent.AdStarted, adStartedEvent);
-        }
-      });
+      this.resolveUiVariant(
+        {
+          isAd: isAd,
+          adRequiresUi: adRequiresUi,
+          isRadioModeActive: this.isRadioModeActive,
+          isRadioModeAvailable: this.isRadioModeAvailable,
+        },
+        (context) => {
+          // If this is an ad UI, we need to relay the saved ON_AD_STARTED event data so ad components can configure
+          // themselves for the current ad.
+          if (context.isAd) {
+            /* Relay the ON_AD_STARTED event to the ads UI
+             *
+             * Because the ads UI is initialized in the ON_AD_STARTED handler, i.e. when the ON_AD_STARTED event has
+             * already been fired, components in the ads UI that listen for the ON_AD_STARTED event never receive it.
+             * Since this can break functionality of components that rely on this event, we relay the event to the
+             * ads UI components with the following call.
+             */
+            this.currentUi
+              .getWrappedPlayer()
+              .fireEventInUI(
+                this.player.exports.PlayerEvent.AdStarted,
+                adStartedEvent,
+              );
+          }
+        },
+      );
     };
 
     // Listen to the following events to trigger UI variant resolution
     if (this.config.autoUiVariantResolve) {
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.SourceLoaded, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.SourceUnloaded, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.Play, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.Paused, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.AdStarted, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.AdBreakFinished, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.PlayerResized, resolveUiVariant);
-      this.managerPlayerWrapper.getPlayer().on(this.player.exports.PlayerEvent.ViewModeChanged, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.SourceLoaded, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.SourceUnloaded, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.Play, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.Paused, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.AdStarted, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.AdBreakFinished, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.PlayerResized, resolveUiVariant);
+      this.managerPlayerWrapper
+        .getPlayer()
+        .on(this.player.exports.PlayerEvent.ViewModeChanged, resolveUiVariant);
     }
 
     this.focusVisibilityTracker = new FocusVisibilityTracker('{{PREFIX}}');
@@ -400,6 +460,18 @@ export class UIManager {
   static setLocalizationConfig(localizationConfig: LocalizationConfig) {
     i18n.setConfig(localizationConfig);
   }
+
+  handleIsRadioModeActiveChange = (
+    event: CustomEvent<boolean | null>,
+  ) => {
+    this.isRadioModeActive = event.detail;
+  };
+
+  handleIsRadioModeAvailableChange = (
+    event: CustomEvent<boolean | null>,
+  ) => {
+    this.isRadioModeAvailable = event.detail;
+  };
 
   getConfig(): UIConfig {
     return this.config;
@@ -605,6 +677,11 @@ export class UIManager {
     }
 
     return false;
+  }
+
+  destroy() {
+    window.removeEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange);
+    window.removeEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange)
   }
 }
 

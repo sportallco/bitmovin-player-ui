@@ -5,7 +5,7 @@
     @include svg-icon-shadow;
   }
 
-  background-image: url("../../assets/skin-modern/images/arrowdown.svg");
+  background-image: url("../../assets/skin-modern/images/arrowdown.svg") !important;
 }
 
 .#{$prefix}-ui-gobackbutton-error {

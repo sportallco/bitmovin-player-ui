@@ -18,13 +18,19 @@ export { i18n } from './localization/i18n';
 export { SpatialNavigation } from './spatialnavigation/spatialnavigation';
 export { NavigationGroup } from './spatialnavigation/navigationgroup';
 export { RootNavigationGroup } from './spatialnavigation/rootnavigationgroup';
-export { ListNavigationGroup, ListOrientation } from './spatialnavigation/ListNavigationGroup';
+export {
+  ListNavigationGroup,
+  ListOrientation,
+} from './spatialnavigation/ListNavigationGroup';
 // Components
 export { Button } from './components/button';
 export { ControlBar } from './components/controlbar';
 export { FullscreenToggleButton } from './components/fullscreentogglebutton';
 export { HugePlaybackToggleButton } from './components/hugeplaybacktogglebutton';
-export { PlaybackTimeLabel, PlaybackTimeLabelMode } from './components/playbacktimelabel';
+export {
+  PlaybackTimeLabel,
+  PlaybackTimeLabelMode,
+} from './components/playbacktimelabel';
 export { PlaybackToggleButton } from './components/playbacktogglebutton';
 export { SeekBar } from './components/seekbar';
 export { SelectBox } from './components/selectbox';
@@ -61,7 +67,10 @@ export { BufferingOverlay } from './components/bufferingoverlay';
 export { CastUIContainer } from './components/castuicontainer';
 export { PlaybackToggleOverlay } from './components/playbacktoggleoverlay';
 export { CloseButton } from './components/closebutton';
-export { MetadataLabel, MetadataLabelContent } from './components/metadatalabel';
+export {
+  MetadataLabel,
+  MetadataLabelContent,
+} from './components/metadatalabel';
 export { AirPlayToggleButton } from './components/airplaytogglebutton';
 export { VolumeSlider } from './components/volumeslider';
 export { PictureInPictureToggleButton } from './components/pictureinpicturetogglebutton';
@@ -88,10 +97,51 @@ export { SubtitleSettingsPanelPage } from './components/subtitlesettings/subtitl
 export { SettingsPanelItem } from './components/settingspanelitem';
 export { ReplayButton } from './components/replaybutton';
 
+declare global {
+  interface Window {
+    isRadioModeActive: boolean | null;
+    isRadioModeAvailable: boolean | null;
+  }
+}
+
+const state = {
+  isRadioModeActive: null as boolean | null,
+  isRadioModeAvailable: null as boolean | null,
+};
+
+if (typeof window.isRadioModeActive === 'undefined') {
+  Object.defineProperty(window, 'isRadioModeActive', {
+    get() {
+      return state.isRadioModeActive;
+    },
+    set(value) {
+      state.isRadioModeActive = value;
+      const event = new CustomEvent('isRadioModeActiveChange', {
+        detail: value,
+      });
+      window.dispatchEvent(event);
+    },
+  });
+}
+if (typeof window.isRadioModeAvailable === 'undefined') {
+  Object.defineProperty(window, 'isRadioModeAvailable', {
+    get() {
+      return state.isRadioModeAvailable;
+    },
+    set(value) {
+      state.isRadioModeAvailable = value;
+      const event = new CustomEvent('isRadioModeAvailableChange', {
+        detail: value,
+      });
+      window.dispatchEvent(event);
+    },
+  });
+}
+
 // Object.assign polyfill for ES5/IE9
 // https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 if (typeof Object.assign !== 'function') {
-  Object.assign = function(target: any) {
+  Object.assign = function (target: any) {
     'use strict';
     if (target == null) {
       throw new TypeError('Cannot convert undefined or null to object');

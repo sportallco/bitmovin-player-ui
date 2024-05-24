@@ -30,6 +30,7 @@ export class RadioModeToggleButton extends ToggleButton<RadioModeToggleButtonCon
     super.configure(player, uimanager);
 
     this.onClick.subscribe(() => {
+      // Mobile
       const initialState = this.config.active;
       if (window.bitmovin.customMessageHandler) {
         window.bitmovin.customMessageHandler.sendAsynchronous(
@@ -40,6 +41,9 @@ export class RadioModeToggleButton extends ToggleButton<RadioModeToggleButtonCon
           }),
         );
       }
+
+      // Web
+      window.isRadioModeActive = !window.isRadioModeActive
     });
   }
 }
