@@ -43,7 +43,7 @@ export class RadioModeToggleButton extends ToggleButton<RadioModeToggleButtonCon
       }
 
       // Web
-      window.isRadioModeActive = !window.isRadioModeActive
+      window.isRadioModeActive = !window.isRadioModeActive;
     });
   }
 }

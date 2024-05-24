@@ -149,8 +149,8 @@ export class UIManager {
    */
   constructor(player: PlayerAPI, uiVariants: UIVariant[], uiconfig?: UIConfig);
   constructor(player: PlayerAPI, playerUiOrUiVariants: UIContainer | UIVariant[], uiconfig: UIConfig = {}) {
-    this.isRadioModeActive = window.isRadioModeActive
-    this.isRadioModeAvailable = window.isRadioModeAvailable
+    this.isRadioModeActive = window.isRadioModeActive;
+    this.isRadioModeAvailable = window.isRadioModeAvailable;
 
     if (playerUiOrUiVariants instanceof UIContainer) {
       // Single-UI constructor has been called, transform arguments to UIVariant[] signature
@@ -204,8 +204,8 @@ export class UIManager {
       }
       // Web
 
-      window.addEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange)
-      window.addEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange)
+      window.addEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange);
+      window.addEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange);
     } catch (error) {}
 
     /**
@@ -681,7 +681,7 @@ export class UIManager {
 
   destroy() {
     window.removeEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange);
-    window.removeEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange)
+    window.removeEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange);
   }
 }
 
