@@ -5,9 +5,9 @@
 
   $watermark-size: 4em;
 
-  background-image: url('../../assets/skin-modern/images/logo.svg') !important;
+  background-image: none;
   background-size: initial;
-  height: $watermark-size;
+  height: 0;
   margin: 2em;
   opacity: .8;
   position: absolute;
