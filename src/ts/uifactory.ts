@@ -1,5 +1,4 @@
 import { GoBackButton } from './../custom/ts/components/gobackbutton';
-import { ResetButton } from './../custom/ts/components/resetbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
@@ -358,8 +357,14 @@ export namespace UIFactory {
       ],
     });
 
-    let titleBarComponents = [
-      new GoBackButton(),
+    let titleBarComponents = []
+    const isBrowser = !window.bitmovin.customMessageHandler;
+
+    if (!isBrowser) {
+      titleBarComponents.push(new GoBackButton());
+    }
+    titleBarComponents = [
+      ...titleBarComponents,
       new MetadataLabel({ content: MetadataLabelContent.Title }),
       new CastToggleButton(),
       new VRToggleButton(),
@@ -369,7 +374,11 @@ export namespace UIFactory {
     ];
 
     if (radioModeAvailable) {
-      titleBarComponents.splice(5, 0, new RadioModeToggleButton({ active: false }));
+      titleBarComponents.splice(
+        !isBrowser ? 5 : 4,
+        0,
+        new RadioModeToggleButton({ active: false }),
+      );
     }
 
     return new UIContainer({
