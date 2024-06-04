@@ -1,4 +1,5 @@
 import { GoBackButton } from './../custom/ts/components/gobackbutton';
+import { ResetButton } from './../custom/ts/components/resetbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
@@ -357,7 +358,7 @@ export namespace UIFactory {
       ],
     });
 
-    let titleBarComponents = []
+    let titleBarComponents = [];
     const isBrowser = !window.bitmovin.customMessageHandler;
 
     if (!isBrowser) {
