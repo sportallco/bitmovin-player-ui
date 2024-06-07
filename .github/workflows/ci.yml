@@ -77,9 +77,9 @@ jobs:
       - name: Deploy to S3
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            aws s3 sync --region eu-west-1 . s3://sportall-bitmovin-ui
+            aws s3 sync --region eu-west-1 ./dist s3://sportall-bitmovin-ui
           else
-            aws s3 sync --region eu-west-1 . s3://sportall-bitmovin-ui-staging
+            aws s3 sync --region eu-west-1 ./dist s3://sportall-bitmovin-ui-staging
           fi
         env:
           AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.STAGING_AWS_ACCESS_KEY_ID }}
