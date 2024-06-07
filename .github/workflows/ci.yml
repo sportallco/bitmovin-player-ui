@@ -73,3 +73,25 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           destination_dir: ${{ github.ref == 'refs/heads/main' && 'production' || 'develop' }}
+
+      - name: Deploy to S3
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            aws s3 sync --region eu-west-1 . s3://sportall-bitmovin-ui
+          else
+            aws s3 sync --region eu-west-1 . s3://sportall-bitmovin-ui-staging
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_SECRET_ACCESS_KEY || secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Invalidate Cloudfront
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            aws cloudfront create-invalidation --region eu-west-1 --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID }} --paths "/*"
+          else
+            aws cloudfront create-invalidation --region eu-west-1 --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DIST_ID }} --paths "/*"
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.PROD_AWS_SECRET_ACCESS_KEY || secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
