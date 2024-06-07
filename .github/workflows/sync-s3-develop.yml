@@ -1,0 +1,23 @@
+name: s3-sync-develop
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  sync-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync S3
+        run: aws s3 sync --region eu-west-1 . s3://sportall-bitmovin-ui-staging
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Invalidate Cloudfront
+        run: aws cloudfront create-invalidation --region eu-west-1 --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DIST_ID }} --paths "/*"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
