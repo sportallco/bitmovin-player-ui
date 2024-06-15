@@ -39,15 +39,6 @@ export class CastToggleButton extends ToggleButton<ToggleButtonConfig> {
       }
     });
 
-    let castAvailableHander = () => {
-      const isBrowser = !window.bitmovin.customMessageHandler;
-      if (!isBrowser || player.isCastAvailable()) {
-        this.show();
-      } else {
-        this.hide();
-      }
-    };
-
     // Toggle button 'on' state
     player.on(player.exports.PlayerEvent.CastWaitingForDevice, () => {
       this.on();
@@ -60,7 +51,6 @@ export class CastToggleButton extends ToggleButton<ToggleButtonConfig> {
       this.off();
     });
 
-    castAvailableHander();
     // Startup init
     if (player.isCasting()) {
       this.on();
