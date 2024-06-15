@@ -150,7 +150,6 @@ export namespace DemoFactory {
         controlBar,
         new TitleBar(),
         new RecommendationOverlay(),
-        new Watermark(),
         new ErrorMessageOverlay(),
       ],
     });
