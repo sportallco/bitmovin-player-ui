@@ -9,7 +9,7 @@ import { PlayerAPI } from 'bitmovin-player';
 export interface ResetButtonConfig extends ButtonConfig {}
 
 /**
- * A button that Reset video / live to the beginning.
+ * A button that Reset video / live to the beginning
  */
 export class ResetButton extends Button<ResetButtonConfig> {
   constructor(config: ResetButtonConfig) {
