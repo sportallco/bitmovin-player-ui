@@ -1,6 +1,8 @@
 import { GoBackButton } from './../custom/ts/components/gobackbutton';
 import { ResetButton } from './../custom/ts/components/resetbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
+import { QuanteecConsumptions } from './../custom/ts/components/quanteecconsumptions';
+
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
 import { SettingsPanelPage } from './components/settingspanelpage';
@@ -44,6 +46,7 @@ import { AdClickOverlay } from './components/adclickoverlay';
 import { AdMessageLabel } from './components/admessagelabel';
 import { AdSkipButton } from './components/adskipbutton';
 import { CloseButton } from './components/closebutton';
+
 import {
   MetadataLabel,
   MetadataLabelContent,
@@ -177,6 +180,7 @@ export namespace UIFactory {
       new AirPlayToggleButton(),
       new CastToggleButton(),
       new VRToggleButton(),
+      new QuanteecConsumptions(),
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
       new FullscreenToggleButton(),
     ];
@@ -382,6 +386,7 @@ export namespace UIFactory {
       new VRToggleButton(),
       new PictureInPictureToggleButton(),
       new AirPlayToggleButton(),
+      new QuanteecConsumptions(),
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
     ];
 
