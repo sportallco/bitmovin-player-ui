@@ -378,7 +378,10 @@ export namespace UIFactory {
 
     if (!isBrowser) {
       titleBarComponents.push(new GoBackButton());
+    } else {
+      titleBarComponents.push(new QuanteecConsumptions());
     }
+
     titleBarComponents = [
       ...titleBarComponents,
       new MetadataLabel({ content: MetadataLabelContent.Title }),
@@ -386,7 +389,6 @@ export namespace UIFactory {
       new VRToggleButton(),
       new PictureInPictureToggleButton(),
       new AirPlayToggleButton(),
-      new QuanteecConsumptions(),
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
     ];
 
