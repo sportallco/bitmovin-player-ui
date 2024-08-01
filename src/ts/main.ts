@@ -101,12 +101,14 @@ declare global {
   interface Window {
     isRadioModeActive: boolean | null;
     isRadioModeAvailable: boolean | null;
+    isQuanteecDisplayed:  boolean | null;
   }
 }
 
 const state = {
   isRadioModeActive: null as boolean | null,
   isRadioModeAvailable: null as boolean | null,
+  isQuanteecDisplayed: null as boolean | null,
 };
 
 if (typeof window.isRadioModeActive === 'undefined') {
@@ -123,6 +125,7 @@ if (typeof window.isRadioModeActive === 'undefined') {
     },
   });
 }
+
 if (typeof window.isRadioModeAvailable === 'undefined') {
   Object.defineProperty(window, 'isRadioModeAvailable', {
     get() {
@@ -131,6 +134,21 @@ if (typeof window.isRadioModeAvailable === 'undefined') {
     set(value) {
       state.isRadioModeAvailable = value;
       const event = new CustomEvent('isRadioModeAvailableChange', {
+        detail: value,
+      });
+      window.dispatchEvent(event);
+    },
+  });
+}
+
+if (typeof window.isQuanteecDisplayed === 'undefined') {
+  Object.defineProperty(window, 'isQuanteecDisplayed', {
+    get() {
+      return state.isQuanteecDisplayed;
+    },
+    set(value) {
+      state.isQuanteecDisplayed = value;
+      const event = new CustomEvent('isQuanteecDisplayedChange', {
         detail: value,
       });
       window.dispatchEvent(event);

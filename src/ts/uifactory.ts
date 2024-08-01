@@ -1,6 +1,8 @@
 import { GoBackButton } from './../custom/ts/components/gobackbutton';
 import { ResetButton } from './../custom/ts/components/resetbutton';
 import { RadioModeToggleButton } from './../custom/ts/components/radiomode/radiomodetogglebutton';
+import { QuanteecConsumptions } from './../custom/ts/components/quanteecconsumptions';
+
 import { PlaybackJumpControlsOverlay } from '../custom/ts/components/playbackjumpoverlay';
 import { SubtitleOverlay } from './components/subtitleoverlay';
 import { SettingsPanelPage } from './components/settingspanelpage';
@@ -44,6 +46,7 @@ import { AdClickOverlay } from './components/adclickoverlay';
 import { AdMessageLabel } from './components/admessagelabel';
 import { AdSkipButton } from './components/adskipbutton';
 import { CloseButton } from './components/closebutton';
+
 import {
   MetadataLabel,
   MetadataLabelContent,
@@ -106,7 +109,11 @@ export namespace UIFactory {
     return UIFactory.buildModernTvUI(player, config);
   }
 
-  export function modernUI({ radioModeAvailable }: { radioModeAvailable: boolean }) {
+  export function modernUI({
+    radioModeAvailable,
+  }: {
+    radioModeAvailable: boolean;
+  }) {
     let subtitleOverlay = new SubtitleOverlay();
 
     let mainSettingsPanelPage = new SettingsPanelPage({
@@ -173,12 +180,17 @@ export namespace UIFactory {
       new AirPlayToggleButton(),
       new CastToggleButton(),
       new VRToggleButton(),
+      new QuanteecConsumptions(),
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
       new FullscreenToggleButton(),
     ];
 
     if (radioModeAvailable) {
-      containerComponents.splice(7, 0, new RadioModeToggleButton({ active: false }));
+      containerComponents.splice(
+        7,
+        0,
+        new RadioModeToggleButton({ active: false }),
+      );
     }
 
     let controlBar = new ControlBar({
@@ -215,7 +227,6 @@ export namespace UIFactory {
         controlBar,
         new TitleBar(),
         new RecommendationOverlay(),
-        new Watermark(),
         new ErrorMessageOverlay(),
       ],
       hideDelay: 2000,
@@ -267,7 +278,11 @@ export namespace UIFactory {
     });
   }
 
-  export function modernSmallScreenUI({ radioModeAvailable }: { radioModeAvailable: boolean }) {
+  export function modernSmallScreenUI({
+    radioModeAvailable,
+  }: {
+    radioModeAvailable: boolean;
+  }) {
     let subtitleOverlay = new SubtitleOverlay();
 
     let mainSettingsPanelPage = new SettingsPanelPage({
@@ -363,7 +378,10 @@ export namespace UIFactory {
 
     if (!isBrowser) {
       titleBarComponents.push(new GoBackButton());
+    } else {
+      titleBarComponents.push(new QuanteecConsumptions());
     }
+
     titleBarComponents = [
       ...titleBarComponents,
       new MetadataLabel({ content: MetadataLabelContent.Title }),
@@ -395,7 +413,6 @@ export namespace UIFactory {
           components: titleBarComponents,
         }),
         settingsPanel,
-        new Watermark(),
         new ErrorMessageOverlay(),
       ],
       cssClasses: ['ui-skin-smallscreen'],
@@ -464,7 +481,6 @@ export namespace UIFactory {
         new SubtitleOverlay(),
         new BufferingOverlay(),
         new PlaybackToggleOverlay(),
-        new Watermark(),
         controlBar,
         new TitleBar({ keepHiddenWithoutMetadata: true }),
         new ErrorMessageOverlay(),
