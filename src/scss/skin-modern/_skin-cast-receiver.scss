@@ -33,6 +33,7 @@
     }
 
     .#{$prefix}-ui-watermark {
+      display: none;
       margin: 0;
       right: $overscan-margin;
       top: $overscan-margin;
