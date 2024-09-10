@@ -135,5 +135,5 @@ export interface UIConfig {
   /**
    * Specifies if the `RadioModeToggleButton` should be displayed.
    */
-  radioModeAvailable?: boolean
+  radioModeAvailable?: boolean;
 }
