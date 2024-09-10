@@ -1,5 +1,8 @@
 import { ErrorMessageMap, ErrorMessageTranslator } from './components/errormessageoverlay';
 
+/**
+ * @category Configs
+ */
 export interface UIRecommendationConfig {
   title: string;
   url: string;
@@ -43,6 +46,9 @@ export interface TimelineMarker {
   cssClasses?: string[];
 }
 
+/**
+ * @category Configs
+ */
 export interface UIConfig {
   /**
    * Specifies the container in the DOM into which the UI will be added. Can be a CSS selector string or a
@@ -121,4 +127,8 @@ export interface UIConfig {
    * If set to true, prevents the UI from using `localStorage`.
    */
   disableStorageApi?: boolean;
+  /**
+   * Specifies if the `EcoModeToggleButton` should be displayed within the `SettingsPanel`
+   */
+  ecoMode?: boolean;
 }
