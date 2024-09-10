@@ -17,11 +17,8 @@ import { SettingsPanelPageOpenButton } from './components/settingspanelpageopenb
 import { SubtitleSettingsLabel } from './components/subtitlesettings/subtitlesettingslabel';
 import { SubtitleSelectBox } from './components/subtitleselectbox';
 import { ControlBar } from './components/controlbar';
-import { Container } from './components/container';
-import {
-  PlaybackTimeLabel,
-  PlaybackTimeLabelMode,
-} from './components/playbacktimelabel';
+import { Container, ContainerConfig } from './components/container';
+import { PlaybackTimeLabel, PlaybackTimeLabelMode } from './components/playbacktimelabel';
 import { SeekBar } from './components/seekbar';
 import { SeekBarLabel } from './components/seekbarlabel';
 import { PlaybackToggleButton } from './components/playbacktogglebutton';
@@ -62,10 +59,8 @@ import { SubtitleListBox } from './components/subtitlelistbox';
 import { AudioTrackListBox } from './components/audiotracklistbox';
 import { SpatialNavigation } from './spatialnavigation/spatialnavigation';
 import { RootNavigationGroup } from './spatialnavigation/rootnavigationgroup';
-import {
-  ListNavigationGroup,
-  ListOrientation,
-} from './spatialnavigation/ListNavigationGroup';
+import { ListNavigationGroup, ListOrientation } from './spatialnavigation/ListNavigationGroup';
+import { EcoModeContainer } from './components/ecomodecontainer';
 
 declare global {
   interface Window {
@@ -78,10 +73,7 @@ let playerApi: PlayerAPI;
 let uiConfig: UIConfig;
 
 export namespace UIFactory {
-  export function buildDefaultUI(
-    player: PlayerAPI,
-    config: UIConfig = {},
-  ): UIManager {
+  export function buildDefaultUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
     return UIFactory.buildModernUI(player, config);
   }
 
@@ -109,32 +101,31 @@ export namespace UIFactory {
     return UIFactory.buildModernTvUI(player, config);
   }
 
-  export function modernUI({
-    radioModeAvailable,
-  }: {
-    radioModeAvailable: boolean;
-  }) {
+  export function modernUI({ ecoMode, radioModeAvailable }: UIConfig) {
     let subtitleOverlay = new SubtitleOverlay();
 
-    let mainSettingsPanelPage = new SettingsPanelPage({
-      components: [
-        new SettingsPanelItem(
-          i18n.getLocalizer('settings.video.quality'),
-          new VideoQualitySelectBox(),
-        ),
-        new SettingsPanelItem(
-          i18n.getLocalizer('speed'),
-          new PlaybackSpeedSelectBox(),
-        ),
-        new SettingsPanelItem(
-          i18n.getLocalizer('settings.audio.track'),
-          new AudioTrackSelectBox(),
-        ),
-        new SettingsPanelItem(
-          i18n.getLocalizer('settings.audio.quality'),
-          new AudioQualitySelectBox(),
-        ),
-      ],
+    let mainSettingsPanelPage: SettingsPanelPage;
+
+    const components: Container<ContainerConfig>[] = [
+      new SettingsPanelItem(i18n.getLocalizer('settings.video.quality'), new VideoQualitySelectBox()),
+      new SettingsPanelItem(i18n.getLocalizer('speed'), new PlaybackSpeedSelectBox()),
+      new SettingsPanelItem(i18n.getLocalizer('settings.audio.track'), new AudioTrackSelectBox()),
+      new SettingsPanelItem(i18n.getLocalizer('settings.audio.quality'), new AudioQualitySelectBox()),
+    ];
+
+    if (ecoMode) {
+      const ecoModeContainer = new EcoModeContainer();
+
+      ecoModeContainer.setOnToggleCallback(() => {
+        // forces the browser to re-calculate the height of the settings panel when adding/removing elements
+        settingsPanel.getDomElement().css({ width: '', height: '' });
+      });
+
+      components.unshift(ecoModeContainer);
+    }
+
+    mainSettingsPanelPage = new SettingsPanelPage({
+      components,
     });
 
     let settingsPanel = new SettingsPanel({
@@ -245,12 +236,7 @@ export namespace UIFactory {
         new AdClickOverlay(),
         new PlaybackToggleOverlay(),
         new Container({
-          components: [
-            new AdMessageLabel({
-              text: i18n.getLocalizer('ads.remainingTime'),
-            }),
-            new AdSkipButton(),
-          ],
+          components: [new AdMessageLabel({ text: i18n.getLocalizer('ads.remainingTime') }), new AdSkipButton()],
           cssClass: 'ui-ads-status',
         }),
         new ControlBar({
@@ -351,10 +337,6 @@ export namespace UIFactory {
       components: [
         new Container({
           components: [
-            /* new ResetButton({
-              text: i18n.getLocalizer('restartbutton'),
-              cssClasses: ['ui-skin-radio'],
-            }), */
             new PlaybackTimeLabel({
               timeLabelMode: PlaybackTimeLabelMode.CurrentTime,
               hideInLivePlayback: true,
@@ -364,9 +346,9 @@ export namespace UIFactory {
               timeLabelMode: PlaybackTimeLabelMode.TotalTime,
               cssClasses: ['text-right'],
             }),
-            new FullscreenToggleButton({
-              cssClasses: ['controlbar-fullscreen-toggle-button'],
-            }),
+            // new FullscreenToggleButton({
+            //   cssClasses: ['controlbar-fullscreen-toggle-button'],
+            // }),
           ],
           cssClasses: ['controlbar-top'],
         }),
@@ -439,10 +421,7 @@ export namespace UIFactory {
           ],
         }),
         new Container({
-          components: [
-            new AdMessageLabel({ text: 'Ad: {remainingTime} secs' }),
-            new AdSkipButton(),
-          ],
+          components: [new AdMessageLabel({ text: 'Ad: {remainingTime} secs' }), new AdSkipButton()],
           cssClass: 'ui-ads-status',
         }),
       ],
@@ -515,10 +494,7 @@ export namespace UIFactory {
           ui: modernSmallScreenAdsUI(),
           condition: (context: UIConditionContext) => {
             return (
-              context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth &&
-              context.isAd &&
-              context.adRequiresUi
+              context.isMobile && context.documentWidth < smallScreenSwitchWidth && context.isAd && context.adRequiresUi
             );
           },
         },
@@ -555,13 +531,13 @@ export namespace UIFactory {
           },
         },
         {
-          ui: modernUI({ radioModeAvailable: true }),
+          ui: modernUI({ ...config, radioModeAvailable: true }),
           condition: (context: UIConditionContext) => {
             return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && context.isRadioModeAvailable;
           },
         },
         {
-          ui: modernUI({ radioModeAvailable: false }),
+          ui: modernUI({ ...config, radioModeAvailable: false }),
           condition: (context: UIConditionContext) => {
             return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && !context.isRadioModeAvailable;
           },
@@ -571,10 +547,7 @@ export namespace UIFactory {
     );
   }
 
-  export function buildModernSmallScreenUI(
-    player: PlayerAPI,
-    config: UIConfig = {},
-  ): UIManager {
+  export function buildModernSmallScreenUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
     return new UIManager(
       player,
       [
@@ -614,10 +587,7 @@ export namespace UIFactory {
     return new UIManager(player, modernCastReceiverUI(), config);
   }
 
-  export function buildModernTvUI(
-    player: PlayerAPI,
-    config: UIConfig = {},
-  ): UIManager {
+  export function buildModernTvUI(player: PlayerAPI, config: UIConfig = {}): UIManager {
     return new UIManager(
       player,
       [
