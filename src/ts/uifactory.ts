@@ -346,9 +346,9 @@ export namespace UIFactory {
               timeLabelMode: PlaybackTimeLabelMode.TotalTime,
               cssClasses: ['text-right'],
             }),
-            // new FullscreenToggleButton({
-            //   cssClasses: ['controlbar-fullscreen-toggle-button'],
-            // }),
+            new FullscreenToggleButton({
+              cssClasses: ['controlbar-fullscreen-toggle-button'],
+            }),
           ],
           cssClasses: ['controlbar-top'],
         }),
