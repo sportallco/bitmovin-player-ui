@@ -61,6 +61,7 @@ import { SpatialNavigation } from './spatialnavigation/spatialnavigation';
 import { RootNavigationGroup } from './spatialnavigation/rootnavigationgroup';
 import { ListNavigationGroup, ListOrientation } from './spatialnavigation/ListNavigationGroup';
 import { EcoModeContainer } from './components/ecomodecontainer';
+import { QuickSeekButton } from './components/quickseekbutton';
 
 declare global {
   interface Window {
@@ -213,7 +214,9 @@ export namespace UIFactory {
         subtitleOverlay,
         new BufferingOverlay(),
         new PlaybackToggleOverlay(),
-        new PlaybackJumpControlsOverlay(),
+        new QuickSeekButton({ seekSeconds: -10 }),
+        new QuickSeekButton({ seekSeconds: 10 }),
+        // new PlaybackJumpControlsOverlay(),
         new CastStatusOverlay(),
         controlBar,
         new TitleBar(),
@@ -388,7 +391,9 @@ export namespace UIFactory {
         new BufferingOverlay(),
         new CastStatusOverlay(),
         new PlaybackToggleOverlay(),
-        new PlaybackJumpControlsOverlay(),
+        new QuickSeekButton({ seekSeconds: -10 }),
+        new QuickSeekButton({ seekSeconds: 10 }),
+        // new PlaybackJumpControlsOverlay(),
         new RecommendationOverlay(),
         controlBar,
         new TitleBar({
