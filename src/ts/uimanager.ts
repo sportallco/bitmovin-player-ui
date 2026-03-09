@@ -82,10 +82,6 @@ export interface UIConditionContext {
    * Tells if the radio mode is activated or not
    */
   isRadioModeActive: boolean;
-  /**
-   * Tells if the radio mode is available or not
-   */
-  isRadioModeAvailable: boolean;
 }
 
 /**
@@ -128,7 +124,6 @@ export class UIManager {
   private managerPlayerWrapper: PlayerWrapper;
   private focusVisibilityTracker: FocusVisibilityTracker;
   private isRadioModeActive: boolean;
-  private isRadioModeAvailable: boolean;
   private subtitleSettingsManager: SubtitleSettingsManager;
 
   private events = {
@@ -159,7 +154,6 @@ export class UIManager {
   constructor(player: PlayerAPI, uiVariants: UIVariant[], uiconfig?: UIConfig);
   constructor(player: PlayerAPI, playerUiOrUiVariants: UIContainer | UIVariant[], uiconfig: UIConfig = {}) {
     this.isRadioModeActive = window.isRadioModeActive;
-    this.isRadioModeAvailable = window.isRadioModeAvailable;
 
     if (playerUiOrUiVariants instanceof UIContainer) {
       // Single-UI constructor has been called, transform arguments to UIVariant[] signature
@@ -203,11 +197,9 @@ export class UIManager {
           (data: string) => {
             const { activated, available } = JSON.parse(data);
             this.isRadioModeActive = activated;
-            this.isRadioModeAvailable = available;
 
             this.resolveUiVariant({
               isRadioModeActive: activated,
-              isRadioModeAvailable: available,
             });
           },
         );
@@ -215,7 +207,6 @@ export class UIManager {
       // Web
 
       window.addEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange);
-      window.addEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange);
     } catch (error) {}
 
     /**
@@ -403,7 +394,6 @@ export class UIManager {
           isAd: isAd,
           adRequiresUi: adRequiresUi,
           isRadioModeActive: this.isRadioModeActive,
-          isRadioModeAvailable: this.isRadioModeAvailable,
         },
         (context) => {
           // If this is an ad UI, we need to relay the saved ON_AD_STARTED event data so ad components can configure
@@ -483,11 +473,6 @@ export class UIManager {
     this.isRadioModeActive = event.detail;
   };
 
-  handleIsRadioModeAvailableChange = (
-    event: CustomEvent<boolean | null>,
-  ) => {
-    this.isRadioModeAvailable = event.detail;
-  };
   getSubtitleSettingsManager() {
     return this.subtitleSettingsManager;
   }
@@ -569,7 +554,6 @@ export class UIManager {
       width: this.uiContainerElement.width(),
       documentWidth: document.body.clientWidth,
       isRadioModeActive: false,
-      isRadioModeAvailable: false,
     };
 
     // Overwrite properties of the default context with passed in context properties
@@ -701,7 +685,6 @@ export class UIManager {
 
   destroy() {
     window.removeEventListener('isRadioModeActiveChange', this.handleIsRadioModeActiveChange);
-    window.removeEventListener('isRadioModeAvailableChange', this.handleIsRadioModeAvailableChange);
   }
 }
 

@@ -97,14 +97,12 @@ export { ListSelector, ListSelectorConfig, ListItem, ListItemFilter, ListItemLab
 declare global {
   interface Window {
     isRadioModeActive: boolean | null;
-    isRadioModeAvailable: boolean | null;
     isQuanteecDisplayed:  boolean | null;
   }
 }
 
 const state = {
   isRadioModeActive: null as boolean | null,
-  isRadioModeAvailable: null as boolean | null,
   isQuanteecDisplayed: null as boolean | null,
 };
 
@@ -116,21 +114,6 @@ if (typeof window.isRadioModeActive === 'undefined') {
     set(value) {
       state.isRadioModeActive = value;
       const event = new CustomEvent('isRadioModeActiveChange', {
-        detail: value,
-      });
-      window.dispatchEvent(event);
-    },
-  });
-}
-
-if (typeof window.isRadioModeAvailable === 'undefined') {
-  Object.defineProperty(window, 'isRadioModeAvailable', {
-    get() {
-      return state.isRadioModeAvailable;
-    },
-    set(value) {
-      state.isRadioModeAvailable = value;
-      const event = new CustomEvent('isRadioModeAvailableChange', {
         detail: value,
       });
       window.dispatchEvent(event);

@@ -54,7 +54,7 @@ export namespace DemoFactory {
         return context.isAd && context.adRequiresUi;
       },
     }, {
-      ui: UIFactory.modernSmallScreenUI({ radioModeAvailable: false }),
+      ui: UIFactory.modernSmallScreenUI(),
       condition: (context: UIConditionContext) => {
         return context.isMobile && context.documentWidth < smallScreenSwitchWidth;
       },

@@ -101,7 +101,7 @@ export namespace UIFactory {
     return UIFactory.buildModernTvUI(player, config);
   }
 
-  export function modernUI({ ecoMode, radioModeAvailable }: UIConfig) {
+  export function modernUI({ ecoMode }: UIConfig) {
     let subtitleOverlay = new SubtitleOverlay();
 
     let mainSettingsPanelPage: SettingsPanelPage;
@@ -170,19 +170,13 @@ export namespace UIFactory {
       new PictureInPictureToggleButton(),
       new AirPlayToggleButton(),
       new CastToggleButton(),
+      new RadioModeToggleButton({ active: false }),
       new VRToggleButton(),
       new QuanteecConsumptions(),
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
       new FullscreenToggleButton(),
     ];
 
-    if (radioModeAvailable) {
-      containerComponents.splice(
-        7,
-        0,
-        new RadioModeToggleButton({ active: false }),
-      );
-    }
 
     let controlBar = new ControlBar({
       components: [
@@ -264,11 +258,7 @@ export namespace UIFactory {
     });
   }
 
-  export function modernSmallScreenUI({
-    radioModeAvailable,
-  }: {
-    radioModeAvailable: boolean;
-  }) {
+  export function modernSmallScreenUI() {
     let subtitleOverlay = new SubtitleOverlay();
 
     let mainSettingsPanelPage = new SettingsPanelPage({
@@ -374,13 +364,11 @@ export namespace UIFactory {
       new SettingsToggleButton({ settingsPanel: settingsPanel }),
     ];
 
-    if (radioModeAvailable) {
-      titleBarComponents.splice(
-        !isBrowser ? 5 : 4,
-        0,
-        new RadioModeToggleButton({ active: false }),
-      );
-    }
+    titleBarComponents.splice(
+      !isBrowser ? 5 : 4,
+      0,
+      new RadioModeToggleButton({ active: false }),
+    );
 
     return new UIContainer({
       components: [
@@ -485,12 +473,6 @@ export namespace UIFactory {
       player,
       [
         {
-          ui: modernRadioModeUI(),
-          condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive;
-          },
-        },
-        {
           ui: modernSmallScreenAdsUI(),
           condition: (context: UIConditionContext) => {
             return (
@@ -505,41 +487,20 @@ export namespace UIFactory {
           },
         },
         {
-          ui: modernSmallScreenUI({ radioModeAvailable: true }),
+          ui: modernSmallScreenUI(),
           condition: (context: UIConditionContext) => {
             return (
               !context.isAd &&
               !context.adRequiresUi &&
               context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth &&
-              !context.isRadioModeActive &&
-              context.isRadioModeAvailable
+              context.documentWidth < smallScreenSwitchWidth
             );
           },
         },
         {
-          ui: modernSmallScreenUI({ radioModeAvailable: false }),
+          ui: modernUI({ ...config }),
           condition: (context: UIConditionContext) => {
-            return (
-              !context.isAd &&
-              !context.adRequiresUi &&
-              context.isMobile &&
-              context.documentWidth < smallScreenSwitchWidth &&
-              !context.isRadioModeActive &&
-              !context.isRadioModeAvailable
-            );
-          },
-        },
-        {
-          ui: modernUI({ ...config, radioModeAvailable: true }),
-          condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && context.isRadioModeAvailable;
-          },
-        },
-        {
-          ui: modernUI({ ...config, radioModeAvailable: false }),
-          condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && !context.isRadioModeAvailable;
+            return !context.isAd && !context.adRequiresUi;
           },
         },
       ],
@@ -552,27 +513,15 @@ export namespace UIFactory {
       player,
       [
         {
-          ui: modernRadioModeUI(),
-          condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && context.isRadioModeActive;
-          },
-        },
-        {
           ui: modernSmallScreenAdsUI(),
           condition: (context: UIConditionContext) => {
             return context.isAd && context.adRequiresUi;
           },
         },
         {
-          ui: modernSmallScreenUI({ radioModeAvailable: true }),
+          ui: modernSmallScreenUI(),
           condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && context.isRadioModeAvailable;
-          },
-        },
-        {
-          ui: modernSmallScreenUI({ radioModeAvailable: false }),
-          condition: (context: UIConditionContext) => {
-            return !context.isAd && !context.adRequiresUi && !context.isRadioModeActive && !context.isRadioModeAvailable;
+            return !context.isAd && !context.adRequiresUi;
           },
         },
       ],
@@ -716,41 +665,5 @@ export namespace UIFactory {
       ui: uiContainer,
       spatialNavigation: spatialNavigation,
     };
-  }
-
-  export function modernRadioModeUI() {
-    return new UIContainer({
-      components: [
-        new ControlBar({
-          components: [
-            new Container({
-              components: [
-                new PlaybackToggleButton(),
-                new SeekBar({ label: new SeekBarLabel() }),
-                new RadioModeToggleButton({ active: true }),
-              ],
-              cssClasses: ['controlbar-top'],
-            }),
-          ],
-        }),
-      ],
-      cssClasses: ['ui-skin-radio'],
-      hideDelay: -1,
-    });
-  }
-
-  export function buildModernRadioModeUI(
-    player: PlayerAPI,
-    config: UIConfig = {},
-  ): UIManager {
-    return new UIManager(
-      player,
-      [
-        {
-          ui: modernRadioModeUI(),
-        },
-      ],
-      config,
-    );
   }
 }
