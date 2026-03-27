@@ -1,0 +1,10 @@
+import { Component } from '../components/Component';
+import { SettingsPanel, SettingsPanelConfig } from '../components/settings/SettingsPanel';
+import { Container } from '../components/Container';
+import { Action, Direction, Focusable } from './types';
+export declare function isSettingsPanel(component: Component<unknown>): component is SettingsPanel<SettingsPanelConfig>;
+export declare function isComponent(obj: unknown): obj is Component<unknown>;
+export declare function isContainer(obj: unknown): obj is Container<unknown>;
+export declare function isDirection(direction: unknown): direction is Direction;
+export declare function isAction(action: unknown): action is Action;
+export declare function isFocusable(component: Focusable): boolean;
