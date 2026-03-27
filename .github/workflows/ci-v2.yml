@@ -1,0 +1,98 @@
+name: test_and_deploy_v2
+
+on:
+  push:
+    branches:
+      - v2/main
+      - v2/develop
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up node.js
+        uses: actions/setup-node@v3.3.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Cache node modules
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Lint
+        run: gulp lint
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3.3.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Cache Node modules
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Build for Production
+        run: gulp build-prod
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          destination_dir: ${{ github.ref == 'refs/heads/v2/main' && 'v2-production' || 'v2-develop' }}
+
+      - name: Deploy to S3
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/v2/main" ]]; then
+            aws s3 sync --region eu-west-1 ./dist s3://sportall-bitmovin-ui-production/v2
+          else
+            aws s3 sync --region eu-west-1 ./dist s3://sportall-bitmovin-ui-staging/v2
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/v2/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/v2/main' && secrets.PROD_AWS_SECRET_ACCESS_KEY || secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Invalidate Cloudfront
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/v2/main" ]]; then
+            aws cloudfront create-invalidation --region eu-west-1 --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID }} --paths "/v2/*"
+          else
+            aws cloudfront create-invalidation --region eu-west-1 --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DIST_ID }} --paths "/v2/*"
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/v2/main' && secrets.PROD_AWS_ACCESS_KEY_ID || secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/v2/main' && secrets.PROD_AWS_SECRET_ACCESS_KEY || secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
