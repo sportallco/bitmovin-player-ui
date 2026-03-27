@@ -97,6 +97,7 @@ export { BufferingOverlay, BufferingOverlayConfig } from './components/overlays/
 export { CastUIContainer } from './components/CastUIContainer';
 export { PlaybackToggleOverlay, PlaybackToggleOverlayConfig } from './components/overlays/PlaybackToggleOverlay';
 export { CloseButton, CloseButtonConfig } from './components/buttons/CloseButton';
+export { BackButton } from './components/buttons/BackButton';
 export { MetadataLabel, MetadataLabelContent, MetadataLabelConfig } from './components/labels/MetadataLabel';
 export { AirPlayToggleButton } from './components/buttons/AirPlayToggleButton';
 export { VolumeSlider, VolumeSliderConfig } from './components/seekbar/VolumeSlider';

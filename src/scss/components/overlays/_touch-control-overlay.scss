@@ -39,6 +39,7 @@
   > .#{$prefix}-container-wrapper {
     align-items: center;
     display: flex;
+    position: relative;
 
     .#{$prefix}-seek-forward-label {
       @extend %seek-label;
@@ -51,16 +52,38 @@
 
       left: 10%;
     }
+
+    .#{$prefix}-ui-quickseekbutton {
+      pointer-events: auto;
+
+      &.#{$prefix}-controls-hidden {
+        display: none;
+      }
+    }
+
+    .#{$prefix}-touch-quickseek {
+      height: $icon-size-medium;
+      width: $icon-size-medium;
+      margin: 0 1em;
+
+      .#{$prefix}-ui-icon {
+        background-size: $icon-size-medium;
+        height: 100%;
+        width: 100%;
+      }
+    }
   }
 
   &::before {
     @extend %seek-circle;
     left: -60%;
+    z-index: -1;
   }
 
   &::after {
     @extend %seek-circle;
     right: -60%;
+    z-index: -1;
   }
 
   &.#{$prefix}-seek-forward {

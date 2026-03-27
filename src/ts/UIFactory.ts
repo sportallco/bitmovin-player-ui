@@ -24,6 +24,7 @@ import { CastToggleButton } from './components/buttons/CastToggleButton';
 import { VRToggleButton } from './components/buttons/VRToggleButton';
 import { SettingsToggleButton } from './components/settings/SettingsToggleButton';
 import { FullscreenToggleButton } from './components/buttons/FullscreenToggleButton';
+import { BackButton } from './components/buttons/BackButton';
 import { UIContainer } from './components/UIContainer';
 import { BufferingOverlay } from './components/overlays/BufferingOverlay';
 import { PlaybackToggleOverlay } from './components/overlays/PlaybackToggleOverlay';
@@ -398,6 +399,7 @@ function smallScreenUILayout() {
         components: [
           new Container({
             components: [
+              new BackButton(),
               new MetadataLabel({ content: MetadataLabelContent.Title }),
               new Spacer(),
               new CastToggleButton(),
