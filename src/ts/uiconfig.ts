@@ -131,9 +131,4 @@ export interface UIConfig {
    * Specifies if the `EcoModeToggleButton` should be displayed within the `SettingsPanel`
    */
   ecoMode?: boolean;
-
-  /**
-   * Specifies if the `RadioModeToggleButton` should be displayed.
-   */
-  radioModeAvailable?: boolean;
 }
