@@ -47,6 +47,29 @@
     }
   }
 
+  // Android WebView reports a non-zero env(safe-area-inset-top) that pushes the
+  // title bar lower than the iOS layout (which reports 0 in this WebView context).
+  // Pin the top padding to the small base value on Android so the back button,
+  // title, and trailing actions sit at the same height as on iOS.
+  &.#{$prefix}-ui-android .#{$prefix}-ui-titlebar {
+    $titlebar-padding: 1em;
+    padding: $titlebar-padding max($titlebar-padding, env(safe-area-inset-right, 0)) $titlebar-padding
+      max($titlebar-padding, env(safe-area-inset-left, 0));
+  }
+
+  // The touch control overlay covers the full player area and uses flex to center
+  // its contents (rewind / play / fast-forward), which makes the buttons line up
+  // with the player's vertical midpoint rather than the visible area between the
+  // title bar and the control bar. Reserve space at top and bottom matching those
+  // bars so the buttons read as centered between them on phones.
+  .#{$prefix}-ui-touch-control-overlay {
+    $titlebar-reserved-height: calc(2em + #{$icon-size}); // titlebar paddings + icon row
+    $controlbar-reserved-height: calc(2.5em + #{$icon-size} * 2); // controlbar paddings + 2 icon rows
+    padding-top: max($titlebar-reserved-height, env(safe-area-inset-top, 0));
+    padding-bottom: max($controlbar-reserved-height, env(safe-area-inset-bottom, 0));
+    box-sizing: border-box;
+  }
+
   // Adjustments for screen width x <= 400
   &.#{$prefix}-layout-max-width-400 {
     .#{$prefix}-ui-settings-panel {

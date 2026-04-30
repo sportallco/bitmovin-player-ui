@@ -10,6 +10,7 @@ import { Button, ButtonConfig } from './buttons/Button';
 import { TouchControlOverlay, TouchControlOverlayConfig } from './overlays/TouchControlOverlay';
 import { Component, ComponentConfig } from './Component';
 import { SettingsPanel } from './settings/SettingsPanel';
+import { BrowserUtils } from '../utils/BrowserUtils';
 
 /**
  * Configuration interface for a {@link UIContainer}.
@@ -531,6 +532,15 @@ export class UIContainer extends Container<UIContainerConfig> {
       container.addClass(this.prefixCss('flexbox'));
     } else {
       container.addClass(this.prefixCss('no-flexbox'));
+    }
+
+    // Platform marker classes — used by SCSS to apply targeted overrides without
+    // affecting other platforms. Useful for cases where iOS WKWebView and Android
+    // WebView differ in how they handle env(safe-area-inset-*) or default sizing.
+    if (BrowserUtils.isAndroid) {
+      container.addClass(this.prefixCss('ui-android'));
+    } else if (BrowserUtils.isIOS) {
+      container.addClass(this.prefixCss('ui-ios'));
     }
 
     return container;
