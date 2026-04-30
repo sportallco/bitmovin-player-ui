@@ -25,6 +25,7 @@ var i18n_1 = require("../localization/i18n");
 var Button_1 = require("./buttons/Button");
 var TouchControlOverlay_1 = require("./overlays/TouchControlOverlay");
 var SettingsPanel_1 = require("./settings/SettingsPanel");
+var BrowserUtils_1 = require("../utils/BrowserUtils");
 /**
  * The base container that contains all of the UI. The UIContainer is passed to the {@link UIManager} to build and
  * setup the UI.
@@ -446,6 +447,15 @@ var UIContainer = /** @class */ (function (_super) {
         }
         else {
             container.addClass(this.prefixCss('no-flexbox'));
+        }
+        // Platform marker classes — used by SCSS to apply targeted overrides without
+        // affecting other platforms. Useful for cases where iOS WKWebView and Android
+        // WebView differ in how they handle env(safe-area-inset-*) or default sizing.
+        if (BrowserUtils_1.BrowserUtils.isAndroid) {
+            container.addClass(this.prefixCss('ui-android'));
+        }
+        else if (BrowserUtils_1.BrowserUtils.isIOS) {
+            container.addClass(this.prefixCss('ui-ios'));
         }
         return container;
     };
