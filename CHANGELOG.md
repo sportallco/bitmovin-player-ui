@@ -5,6 +5,104 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [4.14.1] - 2026-05-28
+
+### Fixed
+
+- The exported UI `version` (`window.bitmovin.playerui.version`) no longer includes extra quote characters
+
+### Internal
+
+- Webpack dev server uses automatic port selection starting from `9000`, allowing multiple local checkouts to run concurrently
+
+## [4.14.0] - 2026-05-14
+
+### Added
+
+- New `UIConfig.cea608SmallPlayerHeightThreshold` option (default `360`) to configure the rendered player height threshold at or below which small-player CEA-608 caption adjustments are applied
+
+### Changed
+
+- CEA-608 captions on players with a rendered height at or below 360 CSS pixels (configurable via `cea608SmallPlayerHeightThreshold`) now stay readable by using a centered 80% safe area and avoiding control-bar pushup that can crowd caption rows on small players
+
+### Fixed
+
+- CEA-608 captions could keep stale sizing after CEA subtitle rendering was disabled and re-enabled, causing captions to appear incorrectly scaled or positioned
+
+## [4.13.0] - 2026-05-07
+
+### Added
+
+- New `SubtitleOverlayConfig.enableCea608CaptionFormatting` option (defaults to `true`) to opt out of CEA-608-specific text formatting (monospaced font, uppercase transform, character letter-spacing). CEA-608 row/column positioning is still applied.
+- `NavigationGroup.afterNavigation` which is called after a directional navigation finishes, regardless of whether a target was found
+
+### Fixed
+
+- Inline `<i>`/`<em>`, `<b>`/`<strong>`, and `<u>` tags in subtitle cue text (e.g. CEA-608 italics) were rendered without their semantic styling
+- Player APIs called after the player was already destroyed
+
+## [4.12.0] - 2026-04-30
+
+### Added
+
+- `ListSelectorConfig.comparator` to customize the display order of list-backed selection UIs such as `AudioTrackSelectBox`, `SubtitleSelectBox`, `AudioTrackListBox`, and `SubtitleListBox`. For subtitle selection UIs, the built-in `Off` option remains fixed at the top.
+  Example:
+  ```ts
+  const subtitleListBox = new SubtitleListBox({
+    title: i18n.getLocalizer('settings.subtitles'),
+    comparator: (a, b) => String(a.label).localeCompare(String(b.label)), // A-Z
+  });
+  ```
+  > **Note**: Requires building a custom UI. The default `UIFactory` presets do not expose this option.
+- `AudioTrackListBox` and `SubtitleListBox` now can accept config objects that extend `ListBoxConfig` without `listSelector`.
+  This enables configuring list-selector behavior such as `comparator`, `filter`, and `translator`, as well as list-box/settings-panel options like `title`, `hideDelay`, and related panel settings.
+- `ListSelector.onItemsChanged` event that fires whenever the effective item collection changes, including item additions, removals, reordering, or updates to rendered item data such as `label` and `ariaLabel`.
+  This event should be used by consumers that rebuild the full list UI from `getItems()`, while `onItemAdded` and `onItemRemoved` remain strict membership-change events.
+
+## [4.11.1] - 2026-04-23
+
+### Fixed
+
+- Subtitle window coloring was not applied for non-region WebVTT cues
+- WebVTT subtitle background color is applied to the window instead of the text background
+
+## [4.11.0] - 2026-04-03
+
+### Added
+
+- Export default layout functions in `UIFactory.defaultLayouts` for easier customization of individual UI variants and their display conditions
+
+## [4.10.3] - 2026-04-02
+
+### Fixed
+
+- In TV spatial navigation, the BACK button could be swallowed by the UI and not reach the application when the controls were already hidden
+
+## [4.10.2] - 2026-03-26
+
+### Fixed
+
+- The control bar was not respecting the safe-area, e.g. on iOS, within the Ads UI variant.
+- Ad-UI switches to main content UI when a `SourceLoaded` event is received during active ad playback
+- Missing `TimelineMarker`s when the position calculation happens before the UI finished rendering
+- Unexpected `TimelineMarker`s animation when the Player size changes
+
+## [4.10.1] - 2026-03-24
+
+### Fixed
+
+- `AdStatusOverlay` blocking clicks on `HugePlaybackToggleButton` at small player sizes
+
+## [4.10.0] - 2026-03-16
+
+### Added
+
+- `AdCounterLabel` now shows the ad position across multiple ad breaks scheduled at the same time (e.g. `Ad 2 of 3` instead of `Ad 1 of 1` for each)
+
+### Fixed
+
+- `VolumeController` can store a volume to restore of `0` in some cases, causing unmute to not restore an audible volume level
+
 ## [4.9.1] - 2026-02-24
 
 ### Fixed

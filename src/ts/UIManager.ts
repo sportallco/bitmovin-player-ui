@@ -18,6 +18,7 @@ import { SubtitleSettingsManager } from './utils/SubtitleSettingsManager';
 import { StorageUtils } from './utils/StorageUtils';
 import { BufferingOverlay } from './components/overlays/BufferingOverlay';
 import { ShadowDomManager } from './utils/ShadowDomManager';
+import { AdBreakTracker } from './utils/AdBreakTracker';
 
 /**
  * @category Configs
@@ -61,6 +62,7 @@ export interface InternalUIConfig extends UIConfig {
     onUpdated: EventDispatcher<UIManager, void>;
   };
   volumeController: VolumeController;
+  adBreakTracker: AdBreakTracker;
 }
 
 /**
@@ -206,6 +208,7 @@ export class UIManager {
         onUpdated: new EventDispatcher<UIManager, void>(),
       },
       volumeController: new VolumeController(this.managerPlayerWrapper.getPlayer()),
+      adBreakTracker: new AdBreakTracker(this.managerPlayerWrapper.getPlayer()),
     };
 
     /**
@@ -363,9 +366,13 @@ export class UIManager {
             // TODO introduce an event that is fired when the playback content is updated, a switch to/from ads
             this.config.events.onUpdated.dispatch(this);
             break;
-          // When a new source is loaded during ad playback, there will be no Ad(Break)Finished event
           case player.exports.PlayerEvent.SourceLoaded:
+            // No need to take care of SourceLoaded. As when the source changes, a SourceUnloaded event is received.
+            // When the source gets loaded during ad playback, we don't want to change the UI.
+            break;
           case player.exports.PlayerEvent.SourceUnloaded:
+            // When the source gets unloaded during ad playback, there will be no Ad(Break)Finished event.
+            // This also covers changing a source
             adStartedEvent = null;
             break;
         }
@@ -610,6 +617,8 @@ export class UIManager {
   }
 
   release(): void {
+    this.config.adBreakTracker.release();
+
     for (const uiInstanceManager of this.uiInstanceManagers) {
       this.releaseUi(uiInstanceManager);
     }
