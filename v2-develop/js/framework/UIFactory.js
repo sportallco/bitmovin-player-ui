@@ -38,6 +38,7 @@ var PlaybackTimeLabel_1 = require("./components/labels/PlaybackTimeLabel");
 var SeekBar_1 = require("./components/seekbar/SeekBar");
 var SeekBarLabel_1 = require("./components/seekbar/SeekBarLabel");
 var PlaybackToggleButton_1 = require("./components/buttons/PlaybackToggleButton");
+var QuickSeekButton_1 = require("./components/buttons/QuickSeekButton");
 var VolumeToggleButton_1 = require("./components/buttons/VolumeToggleButton");
 var VolumeSlider_1 = require("./components/seekbar/VolumeSlider");
 var Spacer_1 = require("./components/Spacer");
@@ -259,7 +260,9 @@ function uiLayout(config) {
             }),
             new Container_1.Container({
                 components: [
+                    new QuickSeekButton_1.QuickSeekButton({ seekSeconds: -10 }),
                     new PlaybackToggleButton_1.PlaybackToggleButton(),
+                    new QuickSeekButton_1.QuickSeekButton({ seekSeconds: 10 }),
                     new VolumeToggleButton_1.VolumeToggleButton(),
                     new VolumeSlider_1.VolumeSlider(),
                     new Spacer_1.Spacer(),
@@ -380,8 +383,8 @@ function smallScreenUILayout() {
             subtitleOverlay,
             new BufferingOverlay_1.BufferingOverlay(),
             new CastStatusOverlay_1.CastStatusOverlay(),
-            // Use the touch overlay on mobile devices and the regular playback toggle overlay on desktop browsers
-            BrowserUtils_1.BrowserUtils.isMobile ? new TouchControlOverlay_1.TouchControlOverlay() : new PlaybackToggleOverlay_1.PlaybackToggleOverlay(),
+            // Use the touch overlay on touch devices and the regular playback toggle overlay on desktop browsers
+            BrowserUtils_1.BrowserUtils.isMobile || BrowserUtils_1.BrowserUtils.isTouchSupported ? new TouchControlOverlay_1.TouchControlOverlay() : new PlaybackToggleOverlay_1.PlaybackToggleOverlay(),
             new RecommendationOverlay_1.RecommendationOverlay(),
             controlBar,
             new TitleBar_1.TitleBar({
