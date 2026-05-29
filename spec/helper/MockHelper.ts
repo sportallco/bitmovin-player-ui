@@ -76,6 +76,7 @@ export namespace MockHelper {
     const mockedDomElement = {
       addClass: jest.fn(),
       removeClass: jest.fn(),
+      hasClass: jest.fn(),
       on: jest.fn(),
       off: jest.fn(),
       html: jest.fn(),
@@ -145,6 +146,9 @@ export namespace MockHelper {
         isViewModeAvailable: jest.fn(),
         seek: jest.fn(),
         isMuted: jest.fn(),
+        mute: jest.fn(),
+        unmute: jest.fn(),
+        setVolume: jest.fn(),
         setAudio: jest.fn(),
 
         // Event faker

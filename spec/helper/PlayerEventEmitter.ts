@@ -1,4 +1,5 @@
 import {
+  AdBreak,
   AdBreakEvent,
   AdEvent,
   AirplayChangedEvent,
@@ -31,6 +32,10 @@ export interface ViewModeAvailabilityChangedEvent extends PlayerEventBase {
 
 export class PlayerEventEmitter {
   private eventHandlers: { [eventType: string]: PlayerEventCallback<PlayerEvent>[] } = {};
+  private readonly defaultAdBreak: AdBreak = {
+    id: 'Break-ID',
+    scheduleTime: -1,
+  };
 
   public on<T extends PlayerEvent>(eventType: T, callback: PlayerEventCallback<T>) {
     if (!this.eventHandlers[eventType]) {
@@ -80,14 +85,11 @@ export class PlayerEventEmitter {
     });
   }
 
-  fireAdBreakFinishedEvent(): void {
+  fireAdBreakFinishedEvent(adBreak: AdBreak = this.defaultAdBreak): void {
     this.fireEvent<AdBreakEvent>({
       timestamp: Date.now(),
       type: PlayerEvent.AdBreakFinished,
-      adBreak: {
-        id: 'Break-ID',
-        scheduleTime: -1,
-      },
+      adBreak,
     });
   }
 
@@ -324,12 +326,13 @@ export class PlayerEventEmitter {
     } as SubtitleEvent);
   }
 
-  fireSubtitleCueEnterEvent(): void {
+  fireSubtitleCueEnterEvent(overrides: Omit<Partial<SubtitleCueEvent>, 'type'> = {}): void {
     this.fireEvent<SubtitleCueEvent>({
       subtitleId: 'subtitleId',
       start: 0,
       end: 10,
       text: 'Test Subtitle',
+      ...overrides,
       type: PlayerEvent.CueEnter,
     } as SubtitleCueEvent);
   }

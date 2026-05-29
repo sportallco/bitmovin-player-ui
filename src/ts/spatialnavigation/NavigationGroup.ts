@@ -4,7 +4,16 @@ import { getComponentInDirection } from './NavigationAlgorithm';
 import { resolveAllComponents } from './helper/resolveAllComponents';
 import { NodeEventSubscriber } from './NodeEventSubscriber';
 import { isFocusable, isSettingsPanel } from './TypeGuards';
-import { Action, ActionCallback, AnyComponent, Callback, Direction, Focusable, NavigationCallback } from './types';
+import {
+  Action,
+  ActionCallback,
+  AfterNavigationCallback,
+  AnyComponent,
+  Callback,
+  Direction,
+  Focusable,
+  NavigationCallback,
+} from './types';
 import { FocusableContainer } from './FocusableContainer';
 import { toHtmlElement } from './helper/toHtmlElement';
 
@@ -89,23 +98,43 @@ export class NavigationGroup {
 
   /**
    * If overwritten, allows to implement custom navigation behavior. Per default, the internal handler will still be
-   * executed. To prevent execution of the default navigation handler, call `preventDefault()`;
+   * executed. To prevent execution of the default navigation handler, call `preventDefault()`. Return `true` if your
+   * handler consumed the navigation event. Return `false` or `undefined` if it did not. Consumed events will not be
+   * handled any further by spatial navigation.
    *
    * @param direction {Direction} The direction to move along
-   * @param target {HTMLElement} The target element for the event
+   * @param target {AnyComponent} The target component for the event
    * @param preventDefault {() => void} A function that, when called, will prevent the execution of the default handler
+   * @returns `true` if the event was handled, `false` or `undefined` otherwise
    */
   public onNavigation?: NavigationCallback;
 
   /**
    * If overwritten, allows to implement custom action behavior. Per default, the internal handler will still be
-   * executed. To prevent execution of the default action handler, call `preventDefault()`;
+   * executed. To prevent execution of the default action handler, call `preventDefault()`. Return `true` if your
+   * handler consumed the action event. Return `false` or `undefined` if it did not. Consumed events will not be
+   * handled any further by spatial navigation.
    *
    * @param action {Action} The action that was called
-   * @param target {HTMLElement} The target element that action was called on
+   * @param target {AnyComponent} The target component that action was called on
    * @param preventDefault {() => void} A function that, when called, will prevent the execution of the default handler
+   * @returns `true` if the event was handled, `false` or `undefined` otherwise
    */
   public onAction?: ActionCallback;
+
+  /**
+   * If overwritten, it is called when a directional navigation finished.
+   *
+   * Will be called after the navigation finished regardless if the navigation was successful or not.
+   * If navigation was not successful, the target element will be `undefined`. This can be used for implementing a
+   * custom behavior when the user navigations at the edge of the spatial components. E.g., presenting an additional
+   * overlay when pressing a direction while the last component is already focused.
+   *
+   * @param direction {Direction} The direction to move along
+   * @param target {AnyComponent | undefined} The focused target element for the event or `undefined` if no target
+   *    was found
+   */
+  public afterNavigation?: AfterNavigationCallback;
 
   /**
    * Returns the active HTMLElement.
@@ -143,10 +172,18 @@ export class NavigationGroup {
     }
   }
 
-  protected defaultNavigationHandler(direction: Direction): void {
+  protected defaultNavigationHandler(direction: Direction): boolean {
     if (!this.activeComponent) {
-      return;
+      return false;
     }
+
+    const notifyAfterNavigation = (target?: Focusable) => {
+      const selectedComponent = target instanceof FocusableContainer ? target.primaryComponent : target;
+
+      if (this.afterNavigation) {
+        this.afterNavigation(direction, selectedComponent);
+      }
+    };
 
     const containerContainingActiveComponent = this.getActiveFocusableContainer();
     if (containerContainingActiveComponent) {
@@ -158,7 +195,8 @@ export class NavigationGroup {
 
       if (targetComponent) {
         this.focusComponent(targetComponent);
-        return;
+        notifyAfterNavigation(targetComponent);
+        return true;
       }
     }
 
@@ -167,31 +205,44 @@ export class NavigationGroup {
 
     if (targetComponent) {
       this.focusComponent(targetComponent);
+      notifyAfterNavigation(targetComponent);
+      return true;
     }
+
+    notifyAfterNavigation(targetComponent);
+    return false;
   }
 
-  protected defaultActionHandler(action: Action): void {
+  protected defaultActionHandler(action: Action): boolean {
     switch (action) {
       case Action.SELECT:
         if (this.activeComponent) {
           toHtmlElement(this.activeComponent).click();
         }
-        break;
+        return Boolean(this.activeComponent);
       case Action.BACK:
         this.container.hide();
-        break;
+        return true;
     }
+
+    return false;
   }
 
-  private handleInput<T>(data: T, defaultHandler: (data: T) => void, userHandler?: Callback<T>): void {
+  private handleInput<T>(data: T, defaultHandler: (data: T) => boolean, userHandler?: Callback<T>): boolean {
     let handleDefault = true;
     const preventDefault = () => (handleDefault = false);
+    let handled = false;
 
-    userHandler?.(data, this.activeComponent, preventDefault);
+    if (userHandler && this.activeComponent) {
+      handled = Boolean(userHandler(data, this.activeComponent, preventDefault));
+    }
 
     if (handleDefault) {
-      defaultHandler.call(this, data);
+      const defaultHandled = defaultHandler.call(this, data);
+      handled = handled || defaultHandled;
     }
+
+    return handled;
   }
 
   /**
@@ -200,7 +251,7 @@ export class NavigationGroup {
    * @param direction The direction of the navigation event
    * @returns true if navigation was successful, false otherwise
    */
-  public handleNavigation(direction: Direction): void {
+  public handleNavigation(direction: Direction): boolean {
     if (!this.activeComponent) {
       // If we do not have an active element, the active element has been disabled by a mouseleave
       // event. We should continue the navigation at the exact place where we left off.
@@ -209,11 +260,11 @@ export class NavigationGroup {
       } else {
         this.focusFirstComponent();
       }
-      return;
+      return Boolean(this.activeComponent);
     }
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    this.handleInput(direction, this.defaultNavigationHandler, this.onNavigation);
+    return this.handleInput(direction, this.defaultNavigationHandler, this.onNavigation);
   }
 
   /**
@@ -221,9 +272,9 @@ export class NavigationGroup {
    *
    * @param action The action of the event
    */
-  public handleAction(action: Action): void {
+  public handleAction(action: Action): boolean {
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    this.handleInput(action, this.defaultActionHandler, this.onAction);
+    return this.handleInput(action, this.defaultActionHandler, this.onAction);
   }
 
   /**
