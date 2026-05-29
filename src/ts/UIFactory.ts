@@ -15,7 +15,6 @@ import { PlaybackTimeLabel, PlaybackTimeLabelMode } from './components/labels/Pl
 import { SeekBar } from './components/seekbar/SeekBar';
 import { SeekBarLabel } from './components/seekbar/SeekBarLabel';
 import { PlaybackToggleButton } from './components/buttons/PlaybackToggleButton';
-import { QuickSeekButton } from './components/buttons/QuickSeekButton';
 import { VolumeToggleButton } from './components/buttons/VolumeToggleButton';
 import { VolumeSlider } from './components/seekbar/VolumeSlider';
 import { Spacer } from './components/Spacer';
@@ -403,7 +402,9 @@ export namespace UIFactory {
           new BufferingOverlay(),
           new CastStatusOverlay(),
           // Use the touch overlay on mobile devices and the regular playback toggle overlay on desktop browsers
-          BrowserUtils.isMobile ? new TouchControlOverlay() : new PlaybackToggleOverlay(),
+          BrowserUtils.isMobile || BrowserUtils.isTouchSupported
+            ? new TouchControlOverlay()
+            : new PlaybackToggleOverlay(),
           new RecommendationOverlay(),
           controlBar,
           new TitleBar({

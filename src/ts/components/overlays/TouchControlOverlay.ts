@@ -7,7 +7,6 @@ import { Timeout } from '../../utils/Timeout';
 import { HTMLElementWithComponent } from '../../DOM';
 import { Label, LabelConfig } from '../labels/Label';
 import { i18n } from '../../localization/i18n';
-import { QuickSeekButton } from '../buttons/QuickSeekButton';
 
 export interface TouchControlOverlayConfig extends ContainerConfig {
   /**
@@ -68,10 +67,6 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
   private playbackToggleButton: SmallCenteredPlaybackToggleButton;
   private seekForwardLabel: Label<LabelConfig>;
   private seekBackwardLabel: Label<LabelConfig>;
-  private quickSeekBackwardButton: QuickSeekButton;
-  private quickSeekForwardButton: QuickSeekButton;
-
-  private readonly CONTROLS_HIDDEN_CLASS = 'controls-hidden';
 
   // true if the last tap on the overlay was less than 500msec ago
   private couldBeDoubleTapping: Boolean;
@@ -99,15 +94,6 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
       hidden: true,
     });
 
-    this.quickSeekBackwardButton = new QuickSeekButton({
-      seekSeconds: -10,
-      cssClasses: ['touch-quickseek'],
-    });
-    this.quickSeekForwardButton = new QuickSeekButton({
-      seekSeconds: 10,
-      cssClasses: ['touch-quickseek'],
-    });
-
     this.config = this.mergeConfig(
       config,
       {
@@ -116,13 +102,7 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
         seekTime: 10,
         seekDoubleTapMargin: 15,
         seekDoubleTapTimeout: 200,
-        components: [
-          this.seekBackwardLabel,
-          this.quickSeekBackwardButton,
-          this.playbackToggleButton,
-          this.quickSeekForwardButton,
-          this.seekForwardLabel,
-        ],
+        components: [this.seekBackwardLabel, this.playbackToggleButton, this.seekForwardLabel],
       },
       this.config,
     );
@@ -130,18 +110,6 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
 
   configure(player: PlayerAPI, uimanager: UIInstanceManager): void {
     super.configure(player, uimanager);
-
-    // Initially hide quick seek buttons until controls are shown
-    this.quickSeekBackwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-    this.quickSeekForwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-
-    // Stop click propagation from quick seek buttons to prevent overlay's click handler from interfering
-    this.quickSeekBackwardButton.getDomElement().on('click', (e: Event) => {
-      e.stopPropagation();
-    });
-    this.quickSeekForwardButton.getDomElement().on('click', (e: Event) => {
-      e.stopPropagation();
-    });
 
     let playerSeekTime = 0;
     let startSeekTime = 0;
@@ -157,14 +125,10 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
 
     const showPlaybackToggleButton = () => {
       this.playbackToggleButton.show();
-      this.quickSeekBackwardButton.getDomElement().removeClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-      this.quickSeekForwardButton.getDomElement().removeClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
     };
 
     const hidePlaybackToggleButton = () => {
       this.playbackToggleButton.hide();
-      this.quickSeekBackwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-      this.quickSeekForwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
     };
 
     uimanager.onBufferingShow.subscribe(() => {
