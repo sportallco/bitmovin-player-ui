@@ -15,6 +15,7 @@ import { PlaybackTimeLabel, PlaybackTimeLabelMode } from './components/labels/Pl
 import { SeekBar } from './components/seekbar/SeekBar';
 import { SeekBarLabel } from './components/seekbar/SeekBarLabel';
 import { PlaybackToggleButton } from './components/buttons/PlaybackToggleButton';
+import { QuickSeekButton } from './components/buttons/QuickSeekButton';
 import { VolumeToggleButton } from './components/buttons/VolumeToggleButton';
 import { VolumeSlider } from './components/seekbar/VolumeSlider';
 import { Spacer } from './components/Spacer';
@@ -262,7 +263,9 @@ function uiLayout(config: UIConfig) {
       }),
       new Container({
         components: [
+          new QuickSeekButton({ seekSeconds: -10 }),
           new PlaybackToggleButton(),
+          new QuickSeekButton({ seekSeconds: 10 }),
           new VolumeToggleButton(),
           new VolumeSlider(),
           new Spacer(),
@@ -391,8 +394,8 @@ function smallScreenUILayout() {
       subtitleOverlay,
       new BufferingOverlay(),
       new CastStatusOverlay(),
-      // Use the touch overlay on mobile devices and the regular playback toggle overlay on desktop browsers
-      BrowserUtils.isMobile ? new TouchControlOverlay() : new PlaybackToggleOverlay(),
+      // Use the touch overlay on touch devices and the regular playback toggle overlay on desktop browsers
+      BrowserUtils.isMobile || BrowserUtils.isTouchSupported ? new TouchControlOverlay() : new PlaybackToggleOverlay(),
       new RecommendationOverlay(),
       controlBar,
       new TitleBar({

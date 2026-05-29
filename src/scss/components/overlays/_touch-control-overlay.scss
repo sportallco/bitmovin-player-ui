@@ -62,12 +62,12 @@
     }
 
     .#{$prefix}-touch-quickseek {
-      height: $icon-size-medium;
-      width: $icon-size-medium;
+      height: $icon-size;
+      width: $icon-size;
       margin: 0 1em;
 
       .#{$prefix}-ui-icon {
-        background-size: $icon-size-medium;
+        background-size: $icon-size;
         height: 100%;
         width: 100%;
       }
