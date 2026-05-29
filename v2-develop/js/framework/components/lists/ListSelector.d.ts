@@ -1,5 +1,6 @@
 import { Component, ComponentConfig } from '../Component';
 import { Event } from '../../EventDispatcher';
+import { NoArgs } from '../../EventDispatcher';
 import { LocalizableText } from '../../localization/i18n';
 /**
  * A map of items (key/value -> label} for a {@link ListSelector} in a {@link ListSelectorConfig}.
@@ -39,6 +40,16 @@ export interface ListItemLabelTranslator {
     (listItem: ListItem): string;
 }
 /**
+ * Comparator function to define a custom display order for list items.
+ *
+ * Follows the same contract as {@link Array.prototype.sort}.
+ *
+ * @param listItemA the first item to compare
+ * @param listItemB the second item to compare
+ * @returns negative when A should come first, positive when B should come first, `0` if equal
+ */
+export type ListItemComparator = (listItemA: ListItem, listItemB: ListItem) => number;
+/**
  * Configuration interface for a {@link ListSelector}.
  *
  * @category Configs
@@ -47,13 +58,31 @@ export interface ListSelectorConfig extends ComponentConfig {
     items?: ListItem[];
     filter?: ListItemFilter;
     translator?: ListItemLabelTranslator;
+    /**
+     * Optional comparator to control the display order of list items.
+     *
+     * Requires a custom UI. The default {@link UIFactory} presets do not expose this option.
+     *
+     * Note: For subtitle UIs, the built-in `Off` option is pinned at the top regardless of the
+     * comparator result.
+     */
+    comparator?: ListItemComparator;
 }
 export declare abstract class ListSelector<Config extends ListSelectorConfig> extends Component<ListSelectorConfig> {
     protected items: ListItem[];
     protected selectedItem: string | null;
     private listSelectorEvents;
     constructor(config?: ListSelectorConfig);
+    /**
+     * Applies list-item filtering and label translation before the item enters the effective selector state.
+     */
+    private normalizeItem;
     private getItemIndex;
+    /**
+     * Detects whether the effective UI items changed, including localized labels and aria labels.
+     */
+    private haveItemsChanged;
+    private insertItem;
     /**
      * Returns all current items of this selector.
      * * @returns {ListItem[]}
@@ -106,6 +135,11 @@ export declare abstract class ListSelector<Config extends ListSelectorConfig> ex
      * Synchronize the current items of this selector with the given ones. This will remove and add items selectively.
      * For each removed item the ItemRemovedEvent and for each added item the ItemAddedEvent will be triggered. Favour
      * this method over using clearItems and adding all items again afterwards.
+     *
+     * If the currently selected item is not present in `newItems`, the selection is cleared silently:
+     * no selection event is fired. Callers that need to preserve or restore selection should call
+     * {@link selectItem} after synchronizing.
+     *
      * @param newItems
      */
     synchronizeItems(newItems: ListItem[]): void;
@@ -120,6 +154,15 @@ export declare abstract class ListSelector<Config extends ListSelectorConfig> ex
     itemCount(): number;
     protected onItemAddedEvent(key: string): void;
     protected onItemRemovedEvent(key: string): void;
+    /**
+     * Fired after the selector's effective item state has changed.
+     *
+     * This includes item additions/removals, order changes, localized label changes,
+     * and aria-label changes. The event is dispatched only after `items` and
+     * `selectedItem` have been fully synchronized, so listeners always observe
+     * the final state.
+     */
+    protected onItemsChangedEvent(): void;
     protected onItemSelectedEvent(key: string): void;
     protected onItemSelectionChangedEvent(key: string): void;
     /**
@@ -143,6 +186,17 @@ export declare abstract class ListSelector<Config extends ListSelectorConfig> ex
      * @returns {Event<ListSelector<Config>, string>}
      */
     get onItemRemoved(): Event<ListSelector<Config>, string>;
+    /**
+     * Gets the event that is fired after the selector's effective item state has changed.
+     *
+     * Includes additions/removals, order changes, localized label changes, and
+     * aria-label changes. Dispatched after internal state has been fully synchronized.
+     *
+     * Use this to rebuild from {@link getItems()} when the effective list changes.
+     *
+     * @returns {Event<ListSelector<Config>, NoArgs>}
+     */
+    get onItemsChanged(): Event<ListSelector<Config>, NoArgs>;
     /**
      * Gets the event that is fired when the selected item value changes.
      *

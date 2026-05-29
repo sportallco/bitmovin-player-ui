@@ -10,7 +10,6 @@ export declare class ItemSelectionList extends ListSelector<ListSelectorConfig> 
     protected isActive(): boolean;
     protected toDomElement(): DOM;
     protected updateDomItems(selectedValue?: string): void;
-    protected onItemAddedEvent(value: string): void;
-    protected onItemRemovedEvent(value: string): void;
+    protected onItemsChangedEvent(): void;
     protected onItemSelectedEvent(value: string, updateDomItems?: boolean): void;
 }

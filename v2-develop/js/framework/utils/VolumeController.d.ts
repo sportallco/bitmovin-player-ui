@@ -10,8 +10,10 @@ export interface VolumeSettingChangedArgs {
 export declare class VolumeController {
     private readonly player;
     private static readonly issuerName;
+    private static readonly defaultVolume;
     private readonly events;
     private storedVolume;
+    private transitionActive;
     constructor(player: PlayerAPI);
     setVolume(volume: number): void;
     getVolume(): number;
@@ -27,6 +29,7 @@ export declare class VolumeController {
      */
     recallVolume(): void;
     startTransition(): VolumeTransition;
+    endTransition(): void;
     onChangedEvent(): void;
     /**
      * Gets the event that is fired when the volume settings have changed.

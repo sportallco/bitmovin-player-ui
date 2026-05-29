@@ -36,6 +36,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         _this.preprocessLabelEventCallback = new EventDispatcher_1.EventDispatcher();
         _this.cea608Enabled = false;
         _this.cea608FontSizeFactor = 1;
+        _this.cea608SmallPlayerHeightThreshold = SubtitleOverlay.DEFAULT_CEA608_SMALL_PLAYER_HEIGHT_THRESHOLD;
         _this.filterFontSizeOptions = function (listItem) {
             if (_this.cea608Enabled && listItem.key !== null) {
                 var percent = parseInt(listItem.key, 10);
@@ -47,12 +48,17 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         _this.previewSubtitle = new SubtitleLabel({ text: i18n_1.i18n.getLocalizer('subtitle.example') });
         _this.config = _this.mergeConfig(config, {
             cssClass: 'ui-subtitle-overlay',
+            enableCea608CaptionFormatting: true,
         }, _this.config);
         return _this;
     }
     SubtitleOverlay.prototype.configure = function (player, uimanager) {
         var _this = this;
         _super.prototype.configure.call(this, player, uimanager);
+        var uiConfig = uimanager.getConfig();
+        if (uiConfig.cea608SmallPlayerHeightThreshold !== undefined) {
+            this.cea608SmallPlayerHeightThreshold = uiConfig.cea608SmallPlayerHeightThreshold;
+        }
         var subtitleManager = new ActiveSubtitleManager();
         this.subtitleManager = subtitleManager;
         this.subtitleContainerManager = new SubtitleRegionContainerManager(this);
@@ -75,7 +81,8 @@ var SubtitleOverlay = /** @class */ (function (_super) {
             var labelToReplace = subtitleManager.cueUpdate(event, label);
             _this.preprocessLabelEventCallback.dispatch(event, label);
             if (labelToReplace) {
-                _this.subtitleContainerManager.replaceLabel(labelToReplace, label);
+                _this.subtitleContainerManager.replaceLabel(labelToReplace, label, _this.getDomElement().size());
+                _this.updateComponents();
             }
             if (uimanager.getConfig().forceSubtitlesIntoViewContainer) {
                 _this.handleSubtitleCropping(label);
@@ -120,7 +127,8 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         uimanager.onComponentShow.subscribe(function (component) {
             if (component instanceof ControlBar_1.ControlBar) {
                 _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE));
-                if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated) {
+                var isCea608PushupTransitionEnabled = !_this.getDomElement().hasClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
+                if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated && isCea608PushupTransitionEnabled) {
                     awaitTransitionEnd(_this.getDomElement()).then(_this.ensureCea608GridSizeUpdated);
                 }
             }
@@ -128,7 +136,8 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         uimanager.onComponentHide.subscribe(function (component) {
             if (component instanceof ControlBar_1.ControlBar) {
                 _this.getDomElement().removeClass(_this.prefixCss(SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE));
-                if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated) {
+                var isCea608PushupTransitionEnabled = !_this.getDomElement().hasClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
+                if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated && isCea608PushupTransitionEnabled) {
                     awaitTransitionEnd(_this.getDomElement()).then(_this.ensureCea608GridSizeUpdated);
                 }
             }
@@ -136,6 +145,15 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         this.configureCea608Captions(player, uimanager);
         // Init
         subtitleClearHandler();
+        this.updateCea608PushupFromPlayerHeight(new DOM_1.DOM(player.getContainer()).height());
+    };
+    SubtitleOverlay.prototype.updateCea608PushupFromPlayerHeight = function (playerHeight) {
+        if (this.cea608SmallPlayerHeightThreshold > 0 && playerHeight <= this.cea608SmallPlayerHeightThreshold) {
+            this.getDomElement().addClass(this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
+        }
+        else {
+            this.getDomElement().removeClass(this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
+        }
     };
     SubtitleOverlay.prototype.setFontSizeFactor = function (factor) {
         // We only allow range from 50% to 200% as suggested by spec
@@ -189,6 +207,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
             // Prefer the HTML subtitle text if set, else try generating a image tag as string from the image attribute,
             // else use the plain text
             text: event.html || ActiveSubtitleManager.generateImageTagText(event.image) || event.text,
+            cssClasses: event.vtt && !event.vtt.region ? ['subtitle-vtt-cue'] : [],
             vtt: event.vtt,
             region: region,
             regionStyle: event.regionStyle,
@@ -314,17 +333,19 @@ var SubtitleOverlay = /** @class */ (function (_super) {
                 fontLetterSpacing = 0;
             }
             windowMargin = rowHeight * windowMarginRatio;
-            // Update the CSS custom property on the overlay DOM element
             overlayElement.get().forEach(function (el) {
                 el.style.setProperty('--cea608-row-height', "".concat(rowHeight, "px"));
             });
             // Update font-size of all active subtitle labels
             var updateLabel = function (label) {
-                label.getDomElement().css({
+                var labelCss = {
                     'font-size': "".concat(fontSize, "px"),
                     'line-height': "".concat(rowHeight - windowMargin, "px"),
-                    'letter-spacing': "".concat(fontLetterSpacing, "px"),
-                });
+                };
+                if (_this.isCea608FormattingEnabled()) {
+                    labelCss['letter-spacing'] = "".concat(fontLetterSpacing, "px");
+                }
+                label.getDomElement().css(labelCss);
                 label.regionStyle = "margin: ".concat(windowMargin / 2, "px; height: ").concat(rowHeight, "px");
             };
             for (var _i = 0, _a = _this.getComponents(); _i < _a.length; _i++) {
@@ -343,7 +364,8 @@ var SubtitleOverlay = /** @class */ (function (_super) {
                 }
             }
         };
-        player.on(player.exports.PlayerEvent.PlayerResized, function () {
+        player.on(player.exports.PlayerEvent.PlayerResized, function (e) {
+            _this.updateCea608PushupFromPlayerHeight(parseFloat(e.height));
             if (_this.cea608Enabled) {
                 _this.ensureCea608GridSizeUpdated();
             }
@@ -356,22 +378,33 @@ var SubtitleOverlay = /** @class */ (function (_super) {
             if (!_this.cea608Enabled) {
                 _this.cea608Enabled = true;
                 _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608));
+                if (_this.isCea608FormattingEnabled()) {
+                    _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608_FORMATTING));
+                }
             }
             var leftOffset = event.position.column * SubtitleOverlay.CEA608_COLUMN_OFFSET + '%';
             if (leftOffset === '0%') {
                 // ensure that a little of the window still shows for better readability
                 leftOffset = SubtitleOverlay.DEFAULT_CAPTION_LEFT_OFFSET;
             }
-            label.getDomElement().css({
+            var labelCss = {
                 left: leftOffset,
                 'font-size': "".concat(fontSize, "px"),
-                'letter-spacing': "".concat(fontLetterSpacing, "px"),
                 'line-height': "".concat(rowHeight - windowMargin, "px"),
-            });
+            };
+            if (_this.isCea608FormattingEnabled()) {
+                labelCss['letter-spacing'] = "".concat(fontLetterSpacing, "px");
+            }
+            label.getDomElement().css(labelCss);
             label.regionStyle = "margin: ".concat(windowMargin / 2, "px; height: ").concat(rowHeight, "px");
         });
         var reset = function () {
             _this.getDomElement().removeClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608));
+            _this.getDomElement().removeClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608_FORMATTING));
+            if (_this.cea608Enabled) {
+                // Reset the cache so the next CEA-608 session always runs a fresh recalculation.
+                lastCeaGridRecalculation = { overlayWidth: 0, overlayHeight: 0, fontSizeFactor: 0 };
+            }
             _this.cea608Enabled = false;
         };
         player.on(player.exports.PlayerEvent.CueExit, function () {
@@ -382,7 +415,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
             }
         });
         player.on(player.exports.PlayerEvent.SourceUnloaded, reset);
-        player.on(player.exports.PlayerEvent.SubtitleEnable, reset);
+        player.on(player.exports.PlayerEvent.SubtitleEnabled, reset);
         player.on(player.exports.PlayerEvent.SubtitleDisabled, reset);
     };
     SubtitleOverlay.prototype.enablePreviewSubtitleLabel = function () {
@@ -400,8 +433,15 @@ var SubtitleOverlay = /** @class */ (function (_super) {
             this.updateComponents();
         }
     };
+    SubtitleOverlay.prototype.isCea608FormattingEnabled = function () {
+        var _a;
+        return ((_a = this.config) === null || _a === void 0 ? void 0 : _a.enableCea608CaptionFormatting) !== false;
+    };
     SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE = 'controlbar-visible';
     SubtitleOverlay.CLASS_CEA_608 = 'cea608';
+    SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED = 'cea608-pushup-disabled';
+    SubtitleOverlay.DEFAULT_CEA608_SMALL_PLAYER_HEIGHT_THRESHOLD = 360;
+    SubtitleOverlay.CLASS_CEA_608_FORMATTING = 'cea608-formatting';
     SubtitleOverlay.CEA608_NUM_ROWS = 15;
     SubtitleOverlay.CEA608_NUM_COLUMNS = 32;
     SubtitleOverlay.CEA608_COLUMN_OFFSET = 100 / SubtitleOverlay.CEA608_NUM_COLUMNS;
@@ -625,7 +665,11 @@ var SubtitleRegionContainerManager = /** @class */ (function () {
         var _a = this.getRegion(label), regionContainerId = _a.regionContainerId, regionName = _a.regionName;
         var cssClasses = ["subtitle-position-".concat(regionName)];
         if (label.vtt && label.vtt.region) {
+            cssClasses.push('subtitle-vtt-region-container');
             cssClasses.push("vtt-region-".concat(label.vtt.region.id));
+        }
+        else if (label.vtt) {
+            cssClasses.push('subtitle-vtt-cue-container');
         }
         if (!this.subtitleRegionContainers[regionContainerId]) {
             var regionContainer = new SubtitleRegionContainer({
@@ -646,10 +690,17 @@ var SubtitleRegionContainerManager = /** @class */ (function () {
         }
         this.subtitleRegionContainers[regionContainerId].addLabel(label, overlaySize);
     };
-    SubtitleRegionContainerManager.prototype.replaceLabel = function (previousLabel, newLabel) {
-        var regionContainerId = this.getRegion(previousLabel).regionContainerId;
-        this.subtitleRegionContainers[regionContainerId].removeLabel(previousLabel);
-        this.subtitleRegionContainers[regionContainerId].addLabel(newLabel);
+    SubtitleRegionContainerManager.prototype.replaceLabel = function (previousLabel, newLabel, overlaySize) {
+        var previousRegion = this.getRegion(previousLabel);
+        var newRegion = this.getRegion(newLabel);
+        if (previousRegion.regionContainerId === newRegion.regionContainerId) {
+            var regionContainer = this.subtitleRegionContainers[previousRegion.regionContainerId];
+            regionContainer.removeLabel(previousLabel);
+            regionContainer.addLabel(newLabel, overlaySize);
+            return;
+        }
+        this.removeLabel(previousLabel);
+        this.addLabel(newLabel, overlaySize);
     };
     /**
      * Removes a subtitle label from a container.

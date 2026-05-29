@@ -9,13 +9,15 @@ import { PlayerAPI } from 'bitmovin-player';
  * @category Utils
  */
 export declare class SubtitleSwitchHandler {
-    private static SUBTITLES_OFF_KEY;
+    static readonly SUBTITLES_OFF_KEY: string;
     private player;
     private listElement;
     private uimanager;
     constructor(player: PlayerAPI, element: ListSelector<ListSelectorConfig>, uimanager: UIInstanceManager);
     private bindSelectionEvent;
     private bindPlayerEvents;
+    private hasComparator;
+    private subtitleToListItem;
     private onSubtitleEnabled;
     private addSubtitle;
     private removeSubtitle;

@@ -84,7 +84,7 @@ var SettingsPanelNavigationGroup = /** @class */ (function (_super) {
     SettingsPanelNavigationGroup.prototype.defaultActionHandler = function (action) {
         if (action === types_1.Action.BACK) {
             this.settingsPanel.popSettingsPanelPage();
-            return;
+            return true;
         }
         if (action === types_1.Action.SELECT) {
             // Ensure that the click event is triggered on the focused component before handling the navigation.
@@ -93,9 +93,9 @@ var SettingsPanelNavigationGroup = /** @class */ (function (_super) {
                 this.settingsPanel.hide();
                 _super.prototype.defaultActionHandler.call(this, types_1.Action.BACK);
             }
-            return;
+            return true;
         }
-        _super.prototype.defaultActionHandler.call(this, action);
+        return _super.prototype.defaultActionHandler.call(this, action);
     };
     return SettingsPanelNavigationGroup;
 }(NavigationGroup_1.NavigationGroup));

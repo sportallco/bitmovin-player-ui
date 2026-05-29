@@ -44,20 +44,32 @@ var RootNavigationGroup = /** @class */ (function (_super) {
         return _this;
     }
     RootNavigationGroup.prototype.handleAction = function (action) {
-        this.container.showUi();
-        _super.prototype.handleAction.call(this, action);
+        if (action !== types_1.Action.BACK) {
+            this.container.showUi();
+        }
+        return _super.prototype.handleAction.call(this, action);
     };
     RootNavigationGroup.prototype.handleNavigation = function (direction) {
         this.container.showUi();
-        _super.prototype.handleNavigation.call(this, direction);
+        return _super.prototype.handleNavigation.call(this, direction);
     };
     RootNavigationGroup.prototype.defaultActionHandler = function (action) {
-        if (action === types_1.Action.BACK) {
-            this.container.hideUi();
+        if (action !== types_1.Action.BACK) {
+            return _super.prototype.defaultActionHandler.call(this, action);
         }
-        else {
-            _super.prototype.defaultActionHandler.call(this, action);
+        if (!this.isUiShown()) {
+            return false;
         }
+        this.container.hideUi();
+        return true;
+    };
+    RootNavigationGroup.prototype.isUiShown = function () {
+        var _a;
+        var classList = (_a = this.container.getDomElement().get(0)) === null || _a === void 0 ? void 0 : _a.classList;
+        if (!classList) {
+            return false;
+        }
+        return Array.from(classList).some(function (className) { return /-controls-shown$/.test(className); });
     };
     RootNavigationGroup.prototype.release = function () {
         _super.prototype.release.call(this);

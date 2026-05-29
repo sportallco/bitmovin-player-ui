@@ -12,6 +12,10 @@ var VolumeController = /** @class */ (function () {
         this.events = {
             onChanged: new EventDispatcher_1.EventDispatcher(),
         };
+        this.transitionActive = false;
+        // If player's volume is `0`, `storeVolume` will not store that, therefore assigning the `defaultVolume` to ensure
+        // `storedVolume` is properly initialized.
+        this.storedVolume = VolumeController.defaultVolume;
         this.storeVolume();
         var handler = function () {
             _this.onChangedEvent();
@@ -52,24 +56,36 @@ var VolumeController = /** @class */ (function () {
      * Stores (saves) the current volume so it can later be restored with {@link recallVolume}.
      */
     VolumeController.prototype.storeVolume = function () {
-        this.storedVolume = this.getVolume();
+        var volume = this.getVolume();
+        if (volume > 0) {
+            this.storedVolume = volume;
+        }
     };
     /**
      * Recalls (sets) the volume previously stored with {@link storeVolume}.
      */
     VolumeController.prototype.recallVolume = function () {
-        this.setMuted(this.storedVolume === 0);
-        this.setVolume(this.storedVolume);
+        var volume = this.storedVolume > 0 ? this.storedVolume : VolumeController.defaultVolume;
+        this.setMuted(false);
+        this.setVolume(volume);
     };
     VolumeController.prototype.startTransition = function () {
+        this.transitionActive = true;
         return new VolumeTransition(this);
+    };
+    VolumeController.prototype.endTransition = function () {
+        this.transitionActive = false;
     };
     VolumeController.prototype.onChangedEvent = function () {
         var playerMuted = this.isMuted();
         var playerVolume = this.getVolume();
         var uiMuted = playerMuted || playerVolume === 0;
         var uiVolume = playerMuted ? 0 : playerVolume;
-        this.storeVolume();
+        // Don't store intermediate volume values while the user is scrubbing the volume slider.
+        // The VolumeTransition will store the final value when scrubbing finishes.
+        if (!this.transitionActive) {
+            this.storeVolume();
+        }
         this.events.onChanged.dispatch(this, { volume: uiVolume, muted: uiMuted });
     };
     Object.defineProperty(VolumeController.prototype, "onChanged", {
@@ -83,6 +99,7 @@ var VolumeController = /** @class */ (function () {
         configurable: true
     });
     VolumeController.issuerName = 'ui-volumecontroller';
+    VolumeController.defaultVolume = 100;
     return VolumeController;
 }());
 exports.VolumeController = VolumeController;
@@ -113,6 +130,9 @@ var VolumeTransition = /** @class */ (function () {
             this.controller.setVolume(volume);
             this.controller.storeVolume();
         }
+        // End the transition after all volume/mute operations are complete, so that events emitted
+        // during finish() don't trigger storeVolume() with intermediate values.
+        this.controller.endTransition();
     };
     return VolumeTransition;
 }());

@@ -29,11 +29,8 @@ var AdCounterLabel = /** @class */ (function (_super) {
     function AdCounterLabel(config) {
         if (config === void 0) { config = {}; }
         var _this = _super.call(this, config) || this;
-        _this.updateLabelText = function () {
-            if (!_this.player) {
-                return;
-            }
-            _this.setText(StringUtils_1.StringUtils.replaceAdMessagePlaceholders(i18n_1.i18n.performLocalization(_this.config.adCountOutOfTotal), _this.player));
+        _this.adBreakTrackerAdCountChangedHandler = function (_, adBreakTrackerEvent) {
+            _this.setAdCounterFromAdBreakTracker(adBreakTrackerEvent.currentAdIndex, adBreakTrackerEvent.totalNumberOfAds);
         };
         _this.config = _this.mergeConfig(config, {
             cssClass: 'ui-label-ad-counter',
@@ -42,23 +39,36 @@ var AdCounterLabel = /** @class */ (function (_super) {
         return _this;
     }
     AdCounterLabel.prototype.configure = function (player, uimanager) {
-        var _this = this;
         _super.prototype.configure.call(this, player, uimanager);
         this.player = player;
-        var clearText = function () {
-            _this.setText('');
-        };
-        player.on(player.exports.PlayerEvent.AdStarted, function () {
-            _this.updateLabelText();
-        });
-        player.on(player.exports.PlayerEvent.AdBreakStarted, clearText);
-        player.on(player.exports.PlayerEvent.AdBreakFinished, clearText);
+        this.adBreakTracker = uimanager.getConfig().adBreakTracker;
+        this.adBreakTracker.onAdCountChanged.subscribe(this.adBreakTrackerAdCountChangedHandler);
+        // An ad break may already be ongoing when configure is called, in this case the onAdCountChanged event was missed
+        // and the label is set here
+        if (this.adBreakTracker.currentAdIndex > 0 && this.adBreakTracker.totalNumberOfAds > 0) {
+            this.setAdCounterFromAdBreakTracker(this.adBreakTracker.currentAdIndex, this.adBreakTracker.totalNumberOfAds);
+        }
+    };
+    AdCounterLabel.prototype.release = function () {
+        var _a;
+        (_a = this.adBreakTracker) === null || _a === void 0 ? void 0 : _a.onAdCountChanged.unsubscribe(this.adBreakTrackerAdCountChangedHandler);
+        this.adBreakTracker = undefined;
+        this.player = undefined;
+        _super.prototype.release.call(this);
     };
     AdCounterLabel.prototype.onLanguageChanged = function () {
-        var _a, _b, _c;
-        if ((_c = (_b = (_a = this.player) === null || _a === void 0 ? void 0 : _a.ads) === null || _b === void 0 ? void 0 : _b.isLinearAdActive) === null || _c === void 0 ? void 0 : _c.call(_b)) {
-            this.updateLabelText();
+        var _a, _b, _c, _d, _e, _f;
+        if (((_a = this.adBreakTracker) === null || _a === void 0 ? void 0 : _a.currentAdIndex) > 0 || ((_d = (_c = (_b = this.player) === null || _b === void 0 ? void 0 : _b.ads) === null || _c === void 0 ? void 0 : _c.isLinearAdActive) === null || _d === void 0 ? void 0 : _d.call(_c))) {
+            this.setAdCounterFromAdBreakTracker((_e = this.adBreakTracker) === null || _e === void 0 ? void 0 : _e.currentAdIndex, (_f = this.adBreakTracker) === null || _f === void 0 ? void 0 : _f.totalNumberOfAds);
         }
+    };
+    AdCounterLabel.prototype.setAdCounterFromAdBreakTracker = function (currentAdIndex, totalNumberOfAds) {
+        if (currentAdIndex === 0 && totalNumberOfAds === 0) {
+            // No ad break active and no subsequent ad breaks
+            this.setText('');
+            return;
+        }
+        this.setText(StringUtils_1.StringUtils.replaceAdMessagePlaceholders(i18n_1.i18n.performLocalization(this.config.adCountOutOfTotal), this.player, undefined, currentAdIndex, totalNumberOfAds));
     };
     return AdCounterLabel;
 }(Label_1.Label));

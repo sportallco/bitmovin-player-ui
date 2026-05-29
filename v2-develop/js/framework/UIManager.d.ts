@@ -10,6 +10,7 @@ import { CustomVocabulary, Vocabularies, I18n, LanguageChangedArgument } from '.
 import { SpatialNavigation } from './spatialnavigation/SpatialNavigation';
 import { SubtitleSettingsManager } from './utils/SubtitleSettingsManager';
 import { BufferingOverlay } from './components/overlays/BufferingOverlay';
+import { AdBreakTracker } from './utils/AdBreakTracker';
 /**
  * @category Configs
  */
@@ -50,6 +51,7 @@ export interface InternalUIConfig extends UIConfig {
         onUpdated: EventDispatcher<UIManager, void>;
     };
     volumeController: VolumeController;
+    adBreakTracker: AdBreakTracker;
 }
 /**
  * The context that will be passed to a {@link UIConditionResolver} to determine if it's conditions fulfil the context.

@@ -22,30 +22,34 @@ var SeekBarHandler = /** @class */ (function () {
         this.onNavigation = function (direction, target, preventDefault) {
             var element = (0, toHtmlElement_1.toHtmlElement)(target);
             if (!isSeekBarWrapper(element)) {
-                return;
+                return false;
             }
             if (direction === types_1.Direction.UP || direction === types_1.Direction.DOWN) {
                 _this.stopSeeking(getSeekBar(element));
-                return;
+                return true;
             }
             _this.initializeOrUpdateCursorPosition(element, direction);
             _this.dispatchMouseMoveEvent(getSeekBar(element));
             preventDefault();
+            return true;
         };
         this.onAction = function (action, target, preventDefault) {
             var element = (0, toHtmlElement_1.toHtmlElement)(target);
             if (!isSeekBarWrapper(element)) {
-                return;
+                return false;
             }
             var seekBar = getSeekBar(element);
             if (action === types_1.Action.SELECT && _this.isScrubbing) {
                 _this.dispatchMouseClickEvent(seekBar);
                 preventDefault();
+                return true;
             }
-            else if (action === types_1.Action.BACK) {
+            else if (action === types_1.Action.BACK && _this.isScrubbing) {
                 _this.stopSeeking(seekBar);
                 preventDefault();
+                return true;
             }
+            return false;
         };
         this.rootNavigationGroup.onAction = this.onAction;
         this.eventSubscriber = new NodeEventSubscriber_1.NodeEventSubscriber();

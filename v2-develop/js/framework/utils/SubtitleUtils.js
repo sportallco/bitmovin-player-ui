@@ -33,10 +33,25 @@ var SubtitleSwitchHandler = /** @class */ (function () {
             }
         };
         this.addSubtitle = function (event) {
-            var subtitle = event.subtitle;
-            if (!_this.listElement.hasItem(subtitle.id)) {
-                _this.listElement.addItem(subtitle.id, subtitle.label);
+            var addedSubtitle = event.subtitle;
+            if (!_this.hasComparator()) {
+                if (!_this.listElement.hasItem(addedSubtitle.id)) {
+                    _this.listElement.addItem(addedSubtitle.id, addedSubtitle.label);
+                }
+                return;
             }
+            var availableSubtitles = _this.player.subtitles.list();
+            var mergedSubtitles = availableSubtitles.some(function (track) { return track.id === addedSubtitle.id; })
+                ? availableSubtitles
+                : __spreadArray(__spreadArray([], availableSubtitles, true), [addedSubtitle], false);
+            var offListItem = {
+                key: SubtitleSwitchHandler.SUBTITLES_OFF_KEY,
+                label: i18n_1.i18n.getLocalizer('off'),
+            };
+            _this.listElement.synchronizeItems(__spreadArray([
+                offListItem
+            ], mergedSubtitles.map(function (subtitle) { return _this.subtitleToListItem(subtitle); }), true));
+            _this.selectCurrentSubtitle();
         };
         this.removeSubtitle = function (event) {
             var subtitle = event.subtitle;
@@ -68,11 +83,9 @@ var SubtitleSwitchHandler = /** @class */ (function () {
                 key: SubtitleSwitchHandler.SUBTITLES_OFF_KEY,
                 label: i18n_1.i18n.getLocalizer('off'),
             };
-            var subtitles = _this.player.subtitles.list();
-            var subtitleToListItem = function (subtitle) {
-                return { key: subtitle.id, label: subtitle.label };
-            };
-            _this.listElement.synchronizeItems(__spreadArray([offListItem], subtitles.map(subtitleToListItem), true));
+            _this.listElement.synchronizeItems(__spreadArray([
+                offListItem
+            ], _this.player.subtitles.list().map(function (subtitle) { return _this.subtitleToListItem(subtitle); }), true));
             _this.selectCurrentSubtitle();
         };
         this.player = player;
@@ -110,6 +123,12 @@ var SubtitleSwitchHandler = /** @class */ (function () {
         // Update subtitles when the period within a source changes
         this.player.on(this.player.exports.PlayerEvent.PeriodSwitched, this.refreshSubtitles);
         this.uimanager.getConfig().events.onUpdated.subscribe(this.refreshSubtitles);
+    };
+    SubtitleSwitchHandler.prototype.hasComparator = function () {
+        return this.listElement.getConfig().comparator != null;
+    };
+    SubtitleSwitchHandler.prototype.subtitleToListItem = function (subtitle) {
+        return { key: subtitle.id, label: subtitle.label };
     };
     SubtitleSwitchHandler.SUBTITLES_OFF_KEY = 'null';
     return SubtitleSwitchHandler;

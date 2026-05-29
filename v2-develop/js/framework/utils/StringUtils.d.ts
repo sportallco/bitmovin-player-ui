@@ -22,8 +22,8 @@ export declare namespace StringUtils {
      *   - '{playedTime[formatString]}': the current time
      *   - '{adDuration[formatString]}': the ad duration
      *   - '{adBreakRemainingTime[formatString]}': the total remaining time of all ads in the ad break
-     *   - '{activeAdIndex[formatString]}': the number of the currently played ad within the current ad break
-     *   - '{totalAdsCount[formatString]}': the total number of ads in the current ad break
+     *   - '{activeAdIndex[formatString]}': the number of the currently played ad within the current ad break by default, or `activeAdIndex` if provided. `activeAdIndex` can be used to show the index of the current ad across multiple ad breaks with the same schedule time.
+     *   - '{totalAdsCount[formatString]}': the total number of ads in the current ad break by default, or `totalNumberOfAds` if provided. `totalNumberOfAds` can be used to show the number of ads across multiple ad breaks with the same schedule time.
      *
      * The format string is optional. If not specified, the placeholder is replaced by the time
      * in seconds. If specified, it must be of the following format:
@@ -47,7 +47,13 @@ export declare namespace StringUtils {
      * @param adMessage an ad message with optional placeholders to fill
      * @param player the player to get the time data from
      * @param skipOffset if specified, {remainingTime} will be filled with the remaining time until the ad can be skipped
+     * @param activeAdIndex if specified, {activeAdIndex} will be set to this value. Can be used to calculate the ad index
+     *   across multiple ad breaks which are scheduled for the same time. If not provided, the value will be calculated
+     *   for the current ad break only from the player API.
+     * @param totalNumberOfAds if specified, {totalAdsCount} will be set to this value. Can be used to calculate the total
+     *   number of ads across multiple ad breaks which are scheduled for the same time. If not provided, the value will
+     *   be calculated for the current ad break only from the player API.
      * @returns {string} the ad message with filled placeholders
      */
-    function replaceAdMessagePlaceholders(adMessage: string, player: PlayerAPI, skipOffset?: number): string;
+    function replaceAdMessagePlaceholders(adMessage: string, player: PlayerAPI, skipOffset?: number, activeAdIndex?: number, totalNumberOfAds?: number): string;
 }

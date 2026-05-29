@@ -22,7 +22,6 @@ var EventDispatcher_1 = require("../../EventDispatcher");
 var Timeout_1 = require("../../utils/Timeout");
 var Label_1 = require("../labels/Label");
 var i18n_1 = require("../../localization/i18n");
-var QuickSeekButton_1 = require("../buttons/QuickSeekButton");
 /**
  * Overlays the player and detects touch input
  */
@@ -39,7 +38,6 @@ var TouchControlOverlay = /** @class */ (function (_super) {
             onSeekBackward: new EventDispatcher_1.EventDispatcher(),
             onSeekForward: new EventDispatcher_1.EventDispatcher(),
         };
-        _this.CONTROLS_HIDDEN_CLASS = 'controls-hidden';
         _this.playbackToggleButton = new SmallCenteredPlaybackToggleButton_1.SmallCenteredPlaybackToggleButton({
             enterFullscreenOnInitialPlayback: Boolean(config.enterFullscreenOnInitialPlayback),
         });
@@ -55,43 +53,19 @@ var TouchControlOverlay = /** @class */ (function (_super) {
             cssClass: 'seek-backward-label',
             hidden: true,
         });
-        _this.quickSeekBackwardButton = new QuickSeekButton_1.QuickSeekButton({
-            seekSeconds: -10,
-            cssClasses: ['touch-quickseek'],
-        });
-        _this.quickSeekForwardButton = new QuickSeekButton_1.QuickSeekButton({
-            seekSeconds: 10,
-            cssClasses: ['touch-quickseek'],
-        });
         _this.config = _this.mergeConfig(config, {
             cssClass: 'ui-touch-control-overlay',
             acceptsTouchWithUiHidden: true,
             seekTime: 10,
             seekDoubleTapMargin: 15,
             seekDoubleTapTimeout: 200,
-            components: [
-                _this.seekBackwardLabel,
-                _this.quickSeekBackwardButton,
-                _this.playbackToggleButton,
-                _this.quickSeekForwardButton,
-                _this.seekForwardLabel,
-            ],
+            components: [_this.seekBackwardLabel, _this.playbackToggleButton, _this.seekForwardLabel],
         }, _this.config);
         return _this;
     }
     TouchControlOverlay.prototype.configure = function (player, uimanager) {
         var _this = this;
         _super.prototype.configure.call(this, player, uimanager);
-        // Initially hide quick seek buttons until controls are shown
-        this.quickSeekBackwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-        this.quickSeekForwardButton.getDomElement().addClass(this.prefixCss(this.CONTROLS_HIDDEN_CLASS));
-        // Stop click propagation from quick seek buttons to prevent overlay's click handler from interfering
-        this.quickSeekBackwardButton.getDomElement().on('click', function (e) {
-            e.stopPropagation();
-        });
-        this.quickSeekForwardButton.getDomElement().on('click', function (e) {
-            e.stopPropagation();
-        });
         var playerSeekTime = 0;
         var startSeekTime = 0;
         this.doubleTapTimeout = new Timeout_1.Timeout(this.config.seekDoubleTapTimeout, function () {
@@ -103,13 +77,9 @@ var TouchControlOverlay = /** @class */ (function (_super) {
         var areControlsVisible = false;
         var showPlaybackToggleButton = function () {
             _this.playbackToggleButton.show();
-            _this.quickSeekBackwardButton.getDomElement().removeClass(_this.prefixCss(_this.CONTROLS_HIDDEN_CLASS));
-            _this.quickSeekForwardButton.getDomElement().removeClass(_this.prefixCss(_this.CONTROLS_HIDDEN_CLASS));
         };
         var hidePlaybackToggleButton = function () {
             _this.playbackToggleButton.hide();
-            _this.quickSeekBackwardButton.getDomElement().addClass(_this.prefixCss(_this.CONTROLS_HIDDEN_CLASS));
-            _this.quickSeekForwardButton.getDomElement().addClass(_this.prefixCss(_this.CONTROLS_HIDDEN_CLASS));
         };
         uimanager.onBufferingShow.subscribe(function () {
             isBufferingOverlayVisible = true;

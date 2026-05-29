@@ -5,6 +5,9 @@ import { PlayerAPI } from 'bitmovin-player';
 /**
  * A select box providing a selection between available subtitle and caption tracks.
  *
+ * When a comparator is configured, the built-in "Off" option remains fixed at the top
+ * and is not reordered together with the subtitle tracks.
+ *
  * @category Components
  */
 export declare class SubtitleSelectBox extends SelectBox {
