@@ -44,9 +44,6 @@ export declare class TouchControlOverlay extends Container<TouchControlOverlayCo
     private playbackToggleButton;
     private seekForwardLabel;
     private seekBackwardLabel;
-    private quickSeekBackwardButton;
-    private quickSeekForwardButton;
-    private readonly CONTROLS_HIDDEN_CLASS;
     private couldBeDoubleTapping;
     private doubleTapTimeout;
     private latestTapPosition;

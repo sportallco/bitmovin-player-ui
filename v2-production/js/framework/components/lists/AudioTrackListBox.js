@@ -14,23 +14,35 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AudioTrackListBox = void 0;
 var ListBox_1 = require("./ListBox");
 var AudioTrackUtils_1 = require("../../utils/AudioTrackUtils");
 var AudioTrackSelectBox_1 = require("../settings/AudioTrackSelectBox");
 /**
- * A element that is similar to a select box where the user can select a subtitle
+ * An element that is similar to a select box where the user can select an audio track
  *
  * @category Components
  */
 var AudioTrackListBox = /** @class */ (function (_super) {
     __extends(AudioTrackListBox, _super);
-    function AudioTrackListBox(title) {
-        return _super.call(this, {
-            listSelector: new AudioTrackSelectBox_1.AudioTrackSelectBox(),
-            title: title,
-        }) || this;
+    function AudioTrackListBox(configOrTitle) {
+        if (configOrTitle === void 0) { configOrTitle = {}; }
+        var config = typeof configOrTitle === 'string' || typeof configOrTitle === 'function'
+            ? { title: configOrTitle }
+            : configOrTitle;
+        return _super.call(this, __assign(__assign({}, config), { listSelector: new AudioTrackSelectBox_1.AudioTrackSelectBox(config) })) || this;
     }
     AudioTrackListBox.prototype.configure = function (player, uimanager) {
         _super.prototype.configure.call(this, player, uimanager);

@@ -50,6 +50,7 @@ var MobileV3PlayerAPI_1 = require("./utils/MobileV3PlayerAPI");
 var SubtitleSettingsManager_1 = require("./utils/SubtitleSettingsManager");
 var StorageUtils_1 = require("./utils/StorageUtils");
 var ShadowDomManager_1 = require("./utils/ShadowDomManager");
+var AdBreakTracker_1 = require("./utils/AdBreakTracker");
 var UIManager = /** @class */ (function () {
     function UIManager(player, playerUiOrUiVariants, uiconfig) {
         if (uiconfig === void 0) { uiconfig = {}; }
@@ -78,7 +79,7 @@ var UIManager = /** @class */ (function () {
         uiconfig.metadata = uiconfig.metadata ? uiconfig.metadata : {};
         this.config = __assign(__assign({ playbackSpeedSelectionEnabled: true, autoUiVariantResolve: true, disableAutoHideWhenHovered: false, enableSeekPreview: true, shadowDom: false }, uiconfig), { events: {
                 onUpdated: new EventDispatcher_1.EventDispatcher(),
-            }, volumeController: new VolumeController_1.VolumeController(this.managerPlayerWrapper.getPlayer()) });
+            }, volumeController: new VolumeController_1.VolumeController(this.managerPlayerWrapper.getPlayer()), adBreakTracker: new AdBreakTracker_1.AdBreakTracker(this.managerPlayerWrapper.getPlayer()) });
         /**
          * Gathers configuration data from the UI config and player source config and creates a merged UI config
          * that is used throughout the UI instance.
@@ -209,9 +210,13 @@ var UIManager = /** @class */ (function () {
                         // TODO introduce an event that is fired when the playback content is updated, a switch to/from ads
                         _this.config.events.onUpdated.dispatch(_this);
                         break;
-                    // When a new source is loaded during ad playback, there will be no Ad(Break)Finished event
                     case player.exports.PlayerEvent.SourceLoaded:
+                        // No need to take care of SourceLoaded. As when the source changes, a SourceUnloaded event is received.
+                        // When the source gets loaded during ad playback, we don't want to change the UI.
+                        break;
                     case player.exports.PlayerEvent.SourceUnloaded:
+                        // When the source gets unloaded during ad playback, there will be no Ad(Break)Finished event.
+                        // This also covers changing a source
                         adStartedEvent = null;
                         break;
                 }
@@ -430,6 +435,7 @@ var UIManager = /** @class */ (function () {
         ui.clearEventHandlers();
     };
     UIManager.prototype.release = function () {
+        this.config.adBreakTracker.release();
         for (var _i = 0, _a = this.uiInstanceManagers; _i < _a.length; _i++) {
             var uiInstanceManager = _a[_i];
             this.releaseUi(uiInstanceManager);

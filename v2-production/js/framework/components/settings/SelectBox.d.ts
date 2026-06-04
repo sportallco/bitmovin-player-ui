@@ -28,8 +28,7 @@ export declare class SelectBox extends ListSelector<ListSelectorConfig> {
     private readonly onChange;
     private getSelectElement;
     protected updateDomItems(selectedValue?: string): void;
-    protected onItemAddedEvent(value: string): void;
-    protected onItemRemovedEvent(value: string): void;
+    protected onItemsChangedEvent(): void;
     protected onItemSelectedEvent(value: string, updateDomItems?: boolean): void;
     readonly closeDropdown: () => void;
     private readonly onPlayerStateChange;

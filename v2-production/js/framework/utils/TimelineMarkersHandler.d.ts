@@ -39,7 +39,6 @@ export declare class TimelineMarkersHandler {
     private getMarkerCssProperties;
     private updateMarkerDOM;
     private createMarkerDOM;
-    private updateMarkersDOM;
     private startLiveMarkerUpdater;
     private stopLiveMarkerUpdater;
     private captureSeekableRangeSnapshot;

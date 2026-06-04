@@ -18,5 +18,5 @@ export declare class SettingsPanelNavigationGroup extends NavigationGroup {
     private readonly config;
     constructor(settingsPanel: SettingsPanel<SettingsPanelConfig>, config?: SettingsPanelNavigationGroupConfig | undefined);
     getComponents(): Focusable[];
-    protected defaultActionHandler(action: Action): void;
+    protected defaultActionHandler(action: Action): boolean;
 }

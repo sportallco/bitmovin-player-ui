@@ -45,8 +45,11 @@ var ListBox = /** @class */ (function (_super) {
     ListBox.prototype.configure = function (player, uimanager) {
         var _this = this;
         _super.prototype.configure.call(this, player, uimanager);
-        var onItemAdded = function (_, itemKey) {
+        var createSelectOption = function (itemKey) {
             var item = _this.listSelector.getItemForKey(itemKey);
+            if (!item) {
+                return null;
+            }
             var selectOption = new SettingsPanelSelectOption_1.SettingsPanelSelectOption({
                 label: item.label,
                 labelStyle: Label_1.LabelStyle.TextWithLeadingIcon,
@@ -55,26 +58,38 @@ var ListBox = /** @class */ (function (_super) {
                 addSettingAsComponent: false,
             });
             selectOption.configure(player, uimanager);
-            _this.settingsPanelPage.addSettingsPanelItem(selectOption);
-            _this.onSettingsStateChangedEvent();
+            return selectOption;
         };
-        var onItemRemoved = function (_, itemKey) {
-            var settingsPanelItem = _this.settingsPanelPage.getComponents().find(function (item) {
-                if (!(item instanceof SettingsPanelSelectOption_1.SettingsPanelSelectOption)) {
-                    return false;
-                }
-                return item.getConfig().settingsValue === itemKey;
-            });
-            if (!settingsPanelItem || !(settingsPanelItem instanceof SettingsPanelItem_1.SettingsPanelItem)) {
-                return;
+        var rebuildItems = function () {
+            var settingsPanelItems = _this.settingsPanelPage
+                .getComponents()
+                .filter(function (component) { return component instanceof SettingsPanelSelectOption_1.SettingsPanelSelectOption; });
+            for (var _i = 0, settingsPanelItems_1 = settingsPanelItems; _i < settingsPanelItems_1.length; _i++) {
+                var settingsPanelItem = settingsPanelItems_1[_i];
+                _this.settingsPanelPage.removeSettingsPanelItem(settingsPanelItem);
             }
-            _this.settingsPanelPage.removeSettingsPanelItem(settingsPanelItem);
+            for (var _a = 0, _b = _this.listSelector.getItems(); _a < _b.length; _a++) {
+                var item = _b[_a];
+                var selectOption = createSelectOption(item.key);
+                if (selectOption) {
+                    _this.settingsPanelPage.addSettingsPanelItem(selectOption);
+                }
+            }
             _this.onSettingsStateChangedEvent();
         };
-        this.listSelector.onItemAdded.subscribe(onItemAdded);
-        this.listSelector.onItemRemoved.subscribe(onItemRemoved);
+        var rebuiltDuringListSelectorConfigure = false;
+        var onItemsChanged = function () {
+            rebuiltDuringListSelectorConfigure = true;
+            rebuildItems();
+        };
+        this.listSelector.onItemsChanged.subscribe(onItemsChanged);
         this.settingsPanelPage.configure(player, uimanager);
         this.listSelector.configure(player, uimanager);
+        // `listSelector.configure()` may synchronously emit `onItemsChanged`, so only run the fallback rebuild
+        // when configuration did not already trigger one.
+        if (!rebuiltDuringListSelectorConfigure) {
+            rebuildItems();
+        }
     };
     return ListBox;
 }(SettingsPanel_1.SettingsPanel));

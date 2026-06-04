@@ -420,6 +420,8 @@ var UIContainer = /** @class */ (function (_super) {
     };
     UIContainer.prototype.release = function () {
         var _this = this;
+        // Hide the UI to make sure hideUi becomes a no-op and avoid race conditions with the hide timeout while releasing
+        this.hideUi(true);
         // Explicitly unsubscribe user interaction event handlers because they could be attached to an external element
         // that isn't owned by the UI and therefore not removed on release.
         if (this.userInteractionEvents) {

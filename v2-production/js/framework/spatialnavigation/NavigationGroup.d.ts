@@ -1,5 +1,5 @@
 import { Container, ContainerConfig } from '../components/Container';
-import { Action, ActionCallback, AnyComponent, Direction, Focusable, NavigationCallback } from './types';
+import { Action, ActionCallback, AfterNavigationCallback, AnyComponent, Direction, Focusable, NavigationCallback } from './types';
 /**
  * Used as part of spatial navigation. Groups together different components to which you can navigate to, in a single
  * navigation group.
@@ -44,22 +44,41 @@ export declare class NavigationGroup {
     protected getComponents(): Focusable[];
     /**
      * If overwritten, allows to implement custom navigation behavior. Per default, the internal handler will still be
-     * executed. To prevent execution of the default navigation handler, call `preventDefault()`;
+     * executed. To prevent execution of the default navigation handler, call `preventDefault()`. Return `true` if your
+     * handler consumed the navigation event. Return `false` or `undefined` if it did not. Consumed events will not be
+     * handled any further by spatial navigation.
      *
      * @param direction {Direction} The direction to move along
-     * @param target {HTMLElement} The target element for the event
+     * @param target {AnyComponent} The target component for the event
      * @param preventDefault {() => void} A function that, when called, will prevent the execution of the default handler
+     * @returns `true` if the event was handled, `false` or `undefined` otherwise
      */
     onNavigation?: NavigationCallback;
     /**
      * If overwritten, allows to implement custom action behavior. Per default, the internal handler will still be
-     * executed. To prevent execution of the default action handler, call `preventDefault()`;
+     * executed. To prevent execution of the default action handler, call `preventDefault()`. Return `true` if your
+     * handler consumed the action event. Return `false` or `undefined` if it did not. Consumed events will not be
+     * handled any further by spatial navigation.
      *
      * @param action {Action} The action that was called
-     * @param target {HTMLElement} The target element that action was called on
+     * @param target {AnyComponent} The target component that action was called on
      * @param preventDefault {() => void} A function that, when called, will prevent the execution of the default handler
+     * @returns `true` if the event was handled, `false` or `undefined` otherwise
      */
     onAction?: ActionCallback;
+    /**
+     * If overwritten, it is called when a directional navigation finished.
+     *
+     * Will be called after the navigation finished regardless if the navigation was successful or not.
+     * If navigation was not successful, the target element will be `undefined`. This can be used for implementing a
+     * custom behavior when the user navigations at the edge of the spatial components. E.g., presenting an additional
+     * overlay when pressing a direction while the last component is already focused.
+     *
+     * @param direction {Direction} The direction to move along
+     * @param target {AnyComponent | undefined} The focused target element for the event or `undefined` if no target
+     *    was found
+     */
+    afterNavigation?: AfterNavigationCallback;
     /**
      * Returns the active HTMLElement.
      */
@@ -67,8 +86,8 @@ export declare class NavigationGroup {
     protected focusComponent(component: Focusable): void;
     private blurActiveComponent;
     focusFirstComponent(): void;
-    protected defaultNavigationHandler(direction: Direction): void;
-    protected defaultActionHandler(action: Action): void;
+    protected defaultNavigationHandler(direction: Direction): boolean;
+    protected defaultActionHandler(action: Action): boolean;
     private handleInput;
     /**
      * Handles a navigation event.
@@ -76,13 +95,13 @@ export declare class NavigationGroup {
      * @param direction The direction of the navigation event
      * @returns true if navigation was successful, false otherwise
      */
-    handleNavigation(direction: Direction): void;
+    handleNavigation(direction: Direction): boolean;
     /**
      * Handles an action event.
      *
      * @param action The action of the event
      */
-    handleAction(action: Action): void;
+    handleAction(action: Action): boolean;
     /**
      * Disable navigation group
      *

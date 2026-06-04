@@ -96,12 +96,8 @@ var ItemSelectionList = /** @class */ (function (_super) {
             _loop_1(item);
         }
     };
-    ItemSelectionList.prototype.onItemAddedEvent = function (value) {
-        _super.prototype.onItemAddedEvent.call(this, value);
-        this.updateDomItems(this.selectedItem);
-    };
-    ItemSelectionList.prototype.onItemRemovedEvent = function (value) {
-        _super.prototype.onItemRemovedEvent.call(this, value);
+    ItemSelectionList.prototype.onItemsChangedEvent = function () {
+        _super.prototype.onItemsChangedEvent.call(this);
         this.updateDomItems(this.selectedItem);
     };
     ItemSelectionList.prototype.onItemSelectedEvent = function (value, updateDomItems) {

@@ -53,13 +53,11 @@ var SpatialNavigation = /** @class */ (function () {
             if (!active || !active.container || active.container.isHidden() || active.container.isDisabled()) {
                 return;
             }
-            if ((0, TypeGuards_1.isDirection)(event)) {
-                active.handleNavigation(event);
+            if ((0, TypeGuards_1.isDirection)(event) && active.handleNavigation(event)) {
                 e.preventDefault();
                 e.stopPropagation();
             }
-            if ((0, TypeGuards_1.isAction)(event)) {
-                active.handleAction(event);
+            else if ((0, TypeGuards_1.isAction)(event) && active.handleAction(event)) {
                 e.preventDefault();
                 e.stopPropagation();
             }

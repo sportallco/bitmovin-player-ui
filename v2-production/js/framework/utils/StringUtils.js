@@ -73,8 +73,8 @@ var StringUtils;
      *   - '{playedTime[formatString]}': the current time
      *   - '{adDuration[formatString]}': the ad duration
      *   - '{adBreakRemainingTime[formatString]}': the total remaining time of all ads in the ad break
-     *   - '{activeAdIndex[formatString]}': the number of the currently played ad within the current ad break
-     *   - '{totalAdsCount[formatString]}': the total number of ads in the current ad break
+     *   - '{activeAdIndex[formatString]}': the number of the currently played ad within the current ad break by default, or `activeAdIndex` if provided. `activeAdIndex` can be used to show the index of the current ad across multiple ad breaks with the same schedule time.
+     *   - '{totalAdsCount[formatString]}': the total number of ads in the current ad break by default, or `totalNumberOfAds` if provided. `totalNumberOfAds` can be used to show the number of ads across multiple ad breaks with the same schedule time.
      *
      * The format string is optional. If not specified, the placeholder is replaced by the time
      * in seconds. If specified, it must be of the following format:
@@ -98,12 +98,18 @@ var StringUtils;
      * @param adMessage an ad message with optional placeholders to fill
      * @param player the player to get the time data from
      * @param skipOffset if specified, {remainingTime} will be filled with the remaining time until the ad can be skipped
+     * @param activeAdIndex if specified, {activeAdIndex} will be set to this value. Can be used to calculate the ad index
+     *   across multiple ad breaks which are scheduled for the same time. If not provided, the value will be calculated
+     *   for the current ad break only from the player API.
+     * @param totalNumberOfAds if specified, {totalAdsCount} will be set to this value. Can be used to calculate the total
+     *   number of ads across multiple ad breaks which are scheduled for the same time. If not provided, the value will
+     *   be calculated for the current ad break only from the player API.
      * @returns {string} the ad message with filled placeholders
      */
-    function replaceAdMessagePlaceholders(adMessage, player, skipOffset) {
+    function replaceAdMessagePlaceholders(adMessage, player, skipOffset, activeAdIndex, totalNumberOfAds) {
         var adMessagePlaceholderRegex = new RegExp('\\{(remainingTime|playedTime|adDuration|adBreakRemainingTime|activeAdIndex|totalAdsCount)(}|%((0[1-9]\\d*(\\.\\d+(d|f)|d|f)|\\.\\d+f|d|f)|hh:mm:ss|mm:ss)})', 'g');
         return adMessage.replace(adMessagePlaceholderRegex, function (formatString) {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             var time = 0;
             if (formatString.indexOf('remainingTime') > -1) {
                 if (typeof skipOffset === 'number') {
@@ -135,17 +141,24 @@ var StringUtils;
                 }
             }
             else if (formatString.indexOf('activeAdIndex') > -1 || formatString.indexOf('totalAdsCount') > -1) {
-                var activeAdBreak = (_d = (_c = player.ads) === null || _c === void 0 ? void 0 : _c.getActiveAdBreak) === null || _d === void 0 ? void 0 : _d.call(_c);
-                var activeAd_1 = (_f = (_e = player.ads) === null || _e === void 0 ? void 0 : _e.getActiveAd) === null || _f === void 0 ? void 0 : _f.call(_e);
+                if (formatString.includes('activeAdIndex')) {
+                    if (activeAdIndex != null) {
+                        return formatNumber(activeAdIndex, formatString);
+                    }
+                    var activeAdBreak_1 = (_d = (_c = player.ads) === null || _c === void 0 ? void 0 : _c.getActiveAdBreak) === null || _d === void 0 ? void 0 : _d.call(_c);
+                    var activeAd_1 = (_f = (_e = player.ads) === null || _e === void 0 ? void 0 : _e.getActiveAd) === null || _f === void 0 ? void 0 : _f.call(_e);
+                    var ads_1 = activeAdBreak_1 === null || activeAdBreak_1 === void 0 ? void 0 : activeAdBreak_1.ads;
+                    if (!activeAdBreak_1 || !activeAd_1 || !Array.isArray(ads_1) || ads_1.length === 0) {
+                        return formatNumber(0, formatString);
+                    }
+                    return formatNumber(ads_1.findIndex(function (ad) { return (activeAd_1.id != null && ad.id != null ? ad.id === activeAd_1.id : ad === activeAd_1); }) + 1, formatString);
+                }
+                if (totalNumberOfAds != null) {
+                    return formatNumber(totalNumberOfAds, formatString);
+                }
+                var activeAdBreak = (_h = (_g = player.ads) === null || _g === void 0 ? void 0 : _g.getActiveAdBreak) === null || _h === void 0 ? void 0 : _h.call(_g);
                 var ads = activeAdBreak === null || activeAdBreak === void 0 ? void 0 : activeAdBreak.ads;
-                if (!activeAdBreak || !activeAd_1 || !Array.isArray(ads) || ads.length === 0) {
-                    return formatNumber(0, formatString);
-                }
-                var activeAdIndex = ads.findIndex(function (ad) { return (activeAd_1.id != null && ad.id != null ? ad.id === activeAd_1.id : ad === activeAd_1); }) + 1;
-                if (formatString.indexOf('activeAdIndex') > -1) {
-                    return formatNumber(activeAdIndex, formatString);
-                }
-                return formatNumber(ads.length, formatString);
+                return formatNumber(Array.isArray(ads) ? ads.length : 0, formatString);
             }
             return formatNumber(Math.round(time), formatString);
         });

@@ -113,22 +113,34 @@ var NavigationGroup = /** @class */ (function () {
         }
     };
     NavigationGroup.prototype.defaultNavigationHandler = function (direction) {
+        var _this = this;
         if (!this.activeComponent) {
-            return;
+            return false;
         }
+        var notifyAfterNavigation = function (target) {
+            var selectedComponent = target instanceof FocusableContainer_1.FocusableContainer ? target.primaryComponent : target;
+            if (_this.afterNavigation) {
+                _this.afterNavigation(direction, selectedComponent);
+            }
+        };
         var containerContainingActiveComponent = this.getActiveFocusableContainer();
         if (containerContainingActiveComponent) {
             var targetComponent_1 = (0, NavigationAlgorithm_1.getComponentInDirection)(this.activeComponent, containerContainingActiveComponent.components, direction);
             if (targetComponent_1) {
                 this.focusComponent(targetComponent_1);
-                return;
+                notifyAfterNavigation(targetComponent_1);
+                return true;
             }
         }
         // If no component was found within the container itself, check all components within the group
         var targetComponent = (0, NavigationAlgorithm_1.getComponentInDirection)(this.activeComponent, this.getComponents(), direction);
         if (targetComponent) {
             this.focusComponent(targetComponent);
+            notifyAfterNavigation(targetComponent);
+            return true;
         }
+        notifyAfterNavigation(targetComponent);
+        return false;
     };
     NavigationGroup.prototype.defaultActionHandler = function (action) {
         switch (action) {
@@ -136,19 +148,25 @@ var NavigationGroup = /** @class */ (function () {
                 if (this.activeComponent) {
                     (0, toHtmlElement_1.toHtmlElement)(this.activeComponent).click();
                 }
-                break;
+                return Boolean(this.activeComponent);
             case types_1.Action.BACK:
                 this.container.hide();
-                break;
+                return true;
         }
+        return false;
     };
     NavigationGroup.prototype.handleInput = function (data, defaultHandler, userHandler) {
         var handleDefault = true;
         var preventDefault = function () { return (handleDefault = false); };
-        userHandler === null || userHandler === void 0 ? void 0 : userHandler(data, this.activeComponent, preventDefault);
-        if (handleDefault) {
-            defaultHandler.call(this, data);
+        var handled = false;
+        if (userHandler && this.activeComponent) {
+            handled = Boolean(userHandler(data, this.activeComponent, preventDefault));
         }
+        if (handleDefault) {
+            var defaultHandled = defaultHandler.call(this, data);
+            handled = handled || defaultHandled;
+        }
+        return handled;
     };
     /**
      * Handles a navigation event.
@@ -166,10 +184,10 @@ var NavigationGroup = /** @class */ (function () {
             else {
                 this.focusFirstComponent();
             }
-            return;
+            return Boolean(this.activeComponent);
         }
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        this.handleInput(direction, this.defaultNavigationHandler, this.onNavigation);
+        return this.handleInput(direction, this.defaultNavigationHandler, this.onNavigation);
     };
     /**
      * Handles an action event.
@@ -178,7 +196,7 @@ var NavigationGroup = /** @class */ (function () {
      */
     NavigationGroup.prototype.handleAction = function (action) {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        this.handleInput(action, this.defaultActionHandler, this.onAction);
+        return this.handleInput(action, this.defaultActionHandler, this.onAction);
     };
     /**
      * Disable navigation group

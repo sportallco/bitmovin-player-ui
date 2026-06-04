@@ -28,6 +28,8 @@ var TimelineMarkersHandler = /** @class */ (function () {
     };
     TimelineMarkersHandler.prototype.configureMarkers = function () {
         var _this = this;
+        var refreshMarkers = function () { return _this.updateMarkers(false); };
+        var clearMarkers = function () { return _this.clearMarkers(); };
         var onTimeShift = function () {
             _this.isTimeShifting = true;
         };
@@ -39,21 +41,24 @@ var TimelineMarkersHandler = /** @class */ (function () {
                 onTimeShift();
             }
         };
-        var reset = function () {
+        var resetLiveState = function () {
             _this.stopLiveMarkerUpdater();
-            _this.clearMarkers();
             _this.isTimeShifting = false;
             _this.seekableRangeSnapshot = null;
             _this.player.off(_this.player.exports.PlayerEvent.TimeShift, onTimeShift);
             _this.player.off(_this.player.exports.PlayerEvent.TimeShifted, onTimeShifted);
             _this.uimanager.onSeekPreview.unsubscribe(onSeekPreview);
         };
+        var reset = function () {
+            resetLiveState();
+            _this.clearMarkers();
+        };
         this.player.on(this.player.exports.PlayerEvent.SourceUnloaded, reset);
         this.player.on(this.player.exports.PlayerEvent.Destroy, reset);
-        this.player.on(this.player.exports.PlayerEvent.AdBreakStarted, function () { return _this.clearMarkers(); });
-        this.player.on(this.player.exports.PlayerEvent.AdBreakFinished, function () { return _this.updateMarkers(); });
+        this.player.on(this.player.exports.PlayerEvent.AdBreakStarted, clearMarkers);
+        this.player.on(this.player.exports.PlayerEvent.AdBreakFinished, refreshMarkers);
         var liveStreamDetector = new PlayerUtils_1.PlayerUtils.LiveStreamDetector(this.player, this.uimanager);
-        liveStreamDetector.onLiveChanged.subscribe(function (sender, args) {
+        var onLiveChanged = function (_sender, args) {
             if (args.live) {
                 _this.player.on(_this.player.exports.PlayerEvent.TimeShift, onTimeShift);
                 _this.player.on(_this.player.exports.PlayerEvent.TimeShifted, onTimeShifted);
@@ -61,31 +66,33 @@ var TimelineMarkersHandler = /** @class */ (function () {
                 _this.startLiveMarkerUpdater();
             }
             else {
-                _this.stopLiveMarkerUpdater();
-                _this.uimanager.onSeekPreview.unsubscribe(onSeekPreview);
-                _this.player.off(_this.player.exports.PlayerEvent.TimeShift, onTimeShift);
-                _this.player.off(_this.player.exports.PlayerEvent.TimeShifted, onTimeShifted);
+                resetLiveState();
             }
-        });
+        };
+        liveStreamDetector.onLiveChanged.subscribe(onLiveChanged);
         liveStreamDetector.detect(); // Initial detection
-        this.uimanager.getConfig().events.onUpdated.subscribe(function () { return _this.updateMarkers(); });
-        this.uimanager.onRelease.subscribe(function () {
-            _this.uimanager.getConfig().events.onUpdated.unsubscribe(function () { return _this.updateMarkers(); });
-            reset();
-        });
+        this.uimanager.getConfig().events.onUpdated.subscribe(refreshMarkers);
         // Refresh timeline markers when the player is resized or the UI is configured. Timeline markers
         // are positioned absolutely and must therefore be updated when the size of the seekbar changes.
-        this.player.on(this.player.exports.PlayerEvent.PlayerResized, function () { return _this.updateMarkersDOM(); });
+        this.player.on(this.player.exports.PlayerEvent.PlayerResized, refreshMarkers);
         // Additionally, when this code is called, the seekbar is not part of the UI yet and therefore does not have a size,
         // resulting in a wrong initial position of the marker. Refreshing it once the UI is configured solved this issue.
-        this.uimanager.onConfigured.subscribe(function () {
-            _this.updateMarkers();
-        });
-        this.player.on(this.player.exports.PlayerEvent.SourceLoaded, function () {
-            _this.updateMarkers();
+        this.uimanager.onConfigured.subscribe(refreshMarkers);
+        this.player.on(this.player.exports.PlayerEvent.SourceLoaded, refreshMarkers);
+        this.uimanager.onRelease.subscribe(function () {
+            _this.uimanager.getConfig().events.onUpdated.unsubscribe(refreshMarkers);
+            _this.uimanager.onConfigured.unsubscribe(refreshMarkers);
+            liveStreamDetector.onLiveChanged.unsubscribe(onLiveChanged);
+            reset();
+            _this.player.off(_this.player.exports.PlayerEvent.SourceUnloaded, reset);
+            _this.player.off(_this.player.exports.PlayerEvent.Destroy, reset);
+            _this.player.off(_this.player.exports.PlayerEvent.AdBreakStarted, clearMarkers);
+            _this.player.off(_this.player.exports.PlayerEvent.AdBreakFinished, refreshMarkers);
+            _this.player.off(_this.player.exports.PlayerEvent.PlayerResized, refreshMarkers);
+            _this.player.off(_this.player.exports.PlayerEvent.SourceLoaded, refreshMarkers);
         });
         // Init markers at startup
-        this.updateMarkers();
+        this.updateMarkers(false);
     };
     TimelineMarkersHandler.prototype.getMarkerAtPosition = function (percentage) {
         var snappingRange = this.config.snappingRange;
@@ -127,7 +134,7 @@ var TimelineMarkersHandler = /** @class */ (function () {
             marker.element.remove();
         }
     };
-    TimelineMarkersHandler.prototype.updateMarkers = function () {
+    TimelineMarkersHandler.prototype.updateMarkers = function (animated) {
         var _this = this;
         var seekBarWidth = this.getSeekBarWidth();
         if (seekBarWidth === 0) {
@@ -150,7 +157,7 @@ var TimelineMarkersHandler = /** @class */ (function () {
                 if (matchingMarker) {
                     matchingMarker.position = markerPosition;
                     matchingMarker.duration = markerDuration;
-                    _this.updateMarkerDOM(matchingMarker);
+                    _this.updateMarkerDOM(matchingMarker, animated);
                 }
                 else {
                     var newMarker = { marker: marker, position: markerPosition, duration: markerDuration };
@@ -180,10 +187,11 @@ var TimelineMarkersHandler = /** @class */ (function () {
         }
         return cssProperties;
     };
-    TimelineMarkersHandler.prototype.updateMarkerDOM = function (marker) {
-        // Removing the 'transition: none' value from the initial creation when updating the marker position.
+    TimelineMarkersHandler.prototype.updateMarkerDOM = function (marker, animated) {
+        // Always remove the shorthand 'transition: none' set during creation,
+        // otherwise setting only 'transition-duration' won't re-enable transition-property.
         marker.element.removeCss('transition');
-        marker.element.css(this.getMarkerCssProperties(marker, true));
+        marker.element.css(this.getMarkerCssProperties(marker, animated));
     };
     TimelineMarkersHandler.prototype.createMarkerDOM = function (marker) {
         var markerClasses = ['seekbar-marker']
@@ -220,17 +228,6 @@ var TimelineMarkersHandler = /** @class */ (function () {
         marker.element = markerElement;
         this.markersContainer.append(markerElement);
     };
-    TimelineMarkersHandler.prototype.updateMarkersDOM = function () {
-        var _this = this;
-        this.timelineMarkers.forEach(function (marker) {
-            if (marker.element) {
-                _this.updateMarkerDOM(marker);
-            }
-            else {
-                _this.createMarkerDOM(marker);
-            }
-        });
-    };
     TimelineMarkersHandler.prototype.startLiveMarkerUpdater = function () {
         var _this = this;
         var updateIntervalMs = this.config.markerUpdateIntervalMs || defaultMarkerUpdateIntervalMs;
@@ -240,7 +237,7 @@ var TimelineMarkersHandler = /** @class */ (function () {
             if (!_this.isTimeShifting) {
                 _this.captureSeekableRangeSnapshot();
             }
-            _this.updateMarkers();
+            _this.updateMarkers(true);
         }, true);
         this.markerPositionUpdater.start();
     };

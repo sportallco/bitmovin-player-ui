@@ -138,12 +138,8 @@ var SelectBox = /** @class */ (function (_super) {
             this.selectElement.append(optionElement);
         }
     };
-    SelectBox.prototype.onItemAddedEvent = function (value) {
-        _super.prototype.onItemAddedEvent.call(this, value);
-        this.updateDomItems(this.selectedItem);
-    };
-    SelectBox.prototype.onItemRemovedEvent = function (value) {
-        _super.prototype.onItemRemovedEvent.call(this, value);
+    SelectBox.prototype.onItemsChangedEvent = function () {
+        _super.prototype.onItemsChangedEvent.call(this);
         this.updateDomItems(this.selectedItem);
     };
     SelectBox.prototype.onItemSelectedEvent = function (value, updateDomItems) {

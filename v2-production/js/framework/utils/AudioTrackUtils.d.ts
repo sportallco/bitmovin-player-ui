@@ -15,6 +15,8 @@ export declare class AudioTrackSwitchHandler {
     constructor(player: PlayerAPI, element: ListSelector<ListSelectorConfig>, uimanager: UIInstanceManager);
     private bindSelectionEvent;
     private bindPlayerEvents;
+    private hasComparator;
+    private audioTrackToListItem;
     private addAudioTrack;
     private removeAudioTrack;
     private selectCurrentAudioTrack;

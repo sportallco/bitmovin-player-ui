@@ -43,7 +43,7 @@ export { ErrorMessageOverlay, ErrorMessageOverlayConfig, ErrorMessageTranslator,
 export { RecommendationOverlay } from './components/overlays/RecommendationOverlay';
 export { RecommendationItem, RecommendationItemConfig } from './components/RecommendationItem';
 export { SeekBarLabel, SeekBarLabelConfig } from './components/seekbar/SeekBarLabel';
-export { SubtitleOverlay } from './components/overlays/SubtitleOverlay';
+export { SubtitleOverlay, SubtitleOverlayConfig } from './components/overlays/SubtitleOverlay';
 export { SubtitleSelectBox } from './components/settings/SubtitleSelectBox';
 export { TitleBar, TitleBarConfig } from './components/TitleBar';
 export { VolumeControlButton, VolumeControlButtonConfig } from './components/buttons/VolumeControlButton';
@@ -77,8 +77,8 @@ export { WindowColorSelectBox } from './components/settings/subtitlesettings/Win
 export { WindowOpacitySelectBox } from './components/settings/subtitlesettings/WindowOpacitySelectBox';
 export { SubtitleSettingsResetButton } from './components/settings/subtitlesettings/SubtitleSettingsResetButton';
 export { ListBox, ListBoxConfig } from './components/lists/ListBox';
-export { SubtitleListBox } from './components/lists/SubtitleListBox';
-export { AudioTrackListBox } from './components/lists/AudioTrackListBox';
+export { SubtitleListBox, SubtitleListBoxConfig } from './components/lists/SubtitleListBox';
+export { AudioTrackListBox, AudioTrackListBoxConfig } from './components/lists/AudioTrackListBox';
 export { SettingsPanelPage, SettingsPanelPageConfig } from './components/settings/SettingsPanelPage';
 export { SettingsPanelPageBackButton } from './components/settings/SettingsPanelPageBackButton';
 export { SettingsPanelPageOpenButton } from './components/settings/SettingsPanelPageOpenButton';
@@ -87,7 +87,7 @@ export { SettingsPanelItem, SettingsPanelItemConfig } from './components/setting
 export { DynamicSettingsPanelItem, DynamicSettingsPanelItemConfig, } from './components/settings/DynamicSettingsPanelItem';
 export { ReplayButton } from './components/buttons/ReplayButton';
 export { QuickSeekButton, QuickSeekButtonConfig } from './components/buttons/QuickSeekButton';
-export { ListSelector, ListSelectorConfig, ListItem, ListItemFilter, ListItemLabelTranslator, } from './components/lists/ListSelector';
+export { ListSelector, ListSelectorConfig, ListItem, ListItemComparator, ListItemFilter, ListItemLabelTranslator, } from './components/lists/ListSelector';
 export { AdStatusOverlay } from './components/ads/AdStatusOverlay';
 export { Icon } from './components/Icon';
 export { DismissClickOverlay, DismissClickOverlayConfig } from './components/overlays/DismissClickOverlay';

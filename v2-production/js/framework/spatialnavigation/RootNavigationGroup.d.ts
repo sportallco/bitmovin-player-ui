@@ -9,8 +9,9 @@ import { Action, Direction, Focusable } from './types';
 export declare class RootNavigationGroup extends NavigationGroup {
     readonly container: UIContainer;
     constructor(container: UIContainer, ...elements: Focusable[]);
-    handleAction(action: Action): void;
-    handleNavigation(direction: Direction): void;
-    protected defaultActionHandler(action: Action): void;
+    handleAction(action: Action): boolean;
+    handleNavigation(direction: Direction): boolean;
+    protected defaultActionHandler(action: Action): boolean;
+    private isUiShown;
     release(): void;
 }

@@ -30,6 +30,7 @@ exports.ListSelector = void 0;
 var Component_1 = require("../Component");
 var EventDispatcher_1 = require("../../EventDispatcher");
 var ArrayUtils_1 = require("../../utils/ArrayUtils");
+var i18n_1 = require("../../localization/i18n");
 var ListSelector = /** @class */ (function (_super) {
     __extends(ListSelector, _super);
     function ListSelector(config) {
@@ -39,6 +40,7 @@ var ListSelector = /** @class */ (function (_super) {
         _this.listSelectorEvents = {
             onItemAdded: new EventDispatcher_1.EventDispatcher(),
             onItemRemoved: new EventDispatcher_1.EventDispatcher(),
+            onItemsChanged: new EventDispatcher_1.EventDispatcher(),
             onItemSelected: new EventDispatcher_1.EventDispatcher(),
             onItemSelectionChanged: new EventDispatcher_1.EventDispatcher(),
         };
@@ -49,6 +51,19 @@ var ListSelector = /** @class */ (function (_super) {
         _this.items = _this.config.items;
         return _this;
     }
+    /**
+     * Applies list-item filtering and label translation before the item enters the effective selector state.
+     */
+    ListSelector.prototype.normalizeItem = function (listItem) {
+        var normalizedItem = __assign({}, listItem);
+        if (this.config.filter && !this.config.filter(normalizedItem)) {
+            return null;
+        }
+        if (this.config.translator) {
+            normalizedItem.label = this.config.translator(normalizedItem);
+        }
+        return normalizedItem;
+    };
     ListSelector.prototype.getItemIndex = function (key) {
         for (var i = 0; i < this.items.length; i++) {
             if (this.items[i].key === key) {
@@ -56,6 +71,42 @@ var ListSelector = /** @class */ (function (_super) {
             }
         }
         return -1;
+    };
+    /**
+     * Detects whether the effective UI items changed, including localized labels and aria labels.
+     */
+    ListSelector.prototype.haveItemsChanged = function (previousItems, nextItems) {
+        if (previousItems.length !== nextItems.length) {
+            return true;
+        }
+        for (var i = 0; i < previousItems.length; i++) {
+            var previousItem = previousItems[i];
+            var nextItem = nextItems[i];
+            if (previousItem.key !== nextItem.key ||
+                i18n_1.i18n.performLocalization(previousItem.label) !== i18n_1.i18n.performLocalization(nextItem.label) ||
+                previousItem.ariaLabel !== nextItem.ariaLabel) {
+                return true;
+            }
+        }
+        return false;
+    };
+    ListSelector.prototype.insertItem = function (normalizedItem, sortedInsert) {
+        if (this.config.comparator) {
+            this.items.push(normalizedItem);
+            this.items.sort(this.config.comparator);
+            return;
+        }
+        if (sortedInsert) {
+            var index = this.items.findIndex(function (entry) { return entry.key > normalizedItem.key; });
+            if (index < 0) {
+                this.items.push(normalizedItem);
+            }
+            else {
+                this.items.splice(index, 0, normalizedItem);
+            }
+            return;
+        }
+        this.items.push(normalizedItem);
     };
     /**
      * Returns all current items of this selector.
@@ -83,31 +134,18 @@ var ListSelector = /** @class */ (function (_super) {
     ListSelector.prototype.addItem = function (key, label, sortedInsert, ariaLabel) {
         if (sortedInsert === void 0) { sortedInsert = false; }
         if (ariaLabel === void 0) { ariaLabel = ''; }
-        var listItem = __assign({ key: key, label: label }, (ariaLabel && { ariaLabel: ariaLabel }));
-        // Apply filter function
-        if (this.config.filter && !this.config.filter(listItem)) {
+        var normalizedItem = this.normalizeItem(__assign({ key: key, label: label }, (ariaLabel && { ariaLabel: ariaLabel })));
+        if (!normalizedItem) {
             return;
         }
-        // Apply translator function
-        if (this.config.translator) {
-            listItem.label = this.config.translator(listItem);
+        var existingIndex = this.getItemIndex(key);
+        if (existingIndex > -1) {
+            ArrayUtils_1.ArrayUtils.remove(this.items, this.items[existingIndex]);
+            this.onItemRemovedEvent(key);
         }
-        // Try to remove key first to get overwrite behavior and avoid duplicate keys
-        this.removeItem(key); // This will trigger an ItemRemoved and an ItemAdded event
-        // Add the item to the list
-        if (sortedInsert) {
-            var index = this.items.findIndex(function (entry) { return entry.key > key; });
-            if (index < 0) {
-                this.items.push(listItem);
-            }
-            else {
-                this.items.splice(index, 0, listItem);
-            }
-        }
-        else {
-            this.items.push(listItem);
-        }
+        this.insertItem(normalizedItem, sortedInsert);
         this.onItemAddedEvent(key);
+        this.onItemsChangedEvent();
     };
     /**
      * Removes an item from this selector.
@@ -119,6 +157,7 @@ var ListSelector = /** @class */ (function (_super) {
         if (index > -1) {
             ArrayUtils_1.ArrayUtils.remove(this.items, this.items[index]);
             this.onItemRemovedEvent(key);
+            this.onItemsChangedEvent();
             return true;
         }
         return false;
@@ -165,21 +204,49 @@ var ListSelector = /** @class */ (function (_super) {
      * Synchronize the current items of this selector with the given ones. This will remove and add items selectively.
      * For each removed item the ItemRemovedEvent and for each added item the ItemAddedEvent will be triggered. Favour
      * this method over using clearItems and adding all items again afterwards.
+     *
+     * If the currently selected item is not present in `newItems`, the selection is cleared silently:
+     * no selection event is fired. Callers that need to preserve or restore selection should call
+     * {@link selectItem} after synchronizing.
+     *
      * @param newItems
      */
     ListSelector.prototype.synchronizeItems = function (newItems) {
         var _this = this;
-        newItems
-            .filter(function (item) { return !_this.hasItem(item.key); })
-            .forEach(function (item) { return _this.addItem(item.key, item.label, item.sortedInsert, item.ariaLabel); });
-        this.items
-            .filter(function (item) { return newItems.filter(function (i) { return i.key === item.key; }).length === 0; })
-            .forEach(function (item) { return _this.removeItem(item.key); });
+        var normalizedItems = newItems
+            .map(function (item) { return _this.normalizeItem(item); })
+            .filter(function (item) { return item !== null; });
+        if (this.config.comparator) {
+            normalizedItems.sort(this.config.comparator);
+        }
+        var itemsChanged = this.haveItemsChanged(this.items, normalizedItems);
+        var currentKeys = new Set(this.items.map(function (item) { return item.key; }));
+        var nextKeys = new Set(normalizedItems.map(function (item) { return item.key; }));
+        var removedKeys = this.items.filter(function (item) { return !nextKeys.has(item.key); }).map(function (item) { return item.key; });
+        var addedKeys = normalizedItems.filter(function (item) { return !currentKeys.has(item.key); }).map(function (item) { return item.key; });
+        this.items = normalizedItems;
+        if (this.selectedItem !== null && !nextKeys.has(this.selectedItem)) {
+            this.selectedItem = null;
+        }
+        for (var _i = 0, removedKeys_1 = removedKeys; _i < removedKeys_1.length; _i++) {
+            var key = removedKeys_1[_i];
+            this.onItemRemovedEvent(key);
+        }
+        for (var _a = 0, addedKeys_1 = addedKeys; _a < addedKeys_1.length; _a++) {
+            var key = addedKeys_1[_a];
+            this.onItemAddedEvent(key);
+        }
+        if (itemsChanged) {
+            this.onItemsChangedEvent();
+        }
     };
     /**
      * Removes all items from this selector.
      */
     ListSelector.prototype.clearItems = function () {
+        if (this.items.length === 0) {
+            return;
+        }
         // local copy for iteration after clear
         var items = this.items;
         // clear items
@@ -191,6 +258,7 @@ var ListSelector = /** @class */ (function (_super) {
             var item = items_1[_i];
             this.onItemRemovedEvent(item.key);
         }
+        this.onItemsChangedEvent();
     };
     /**
      * Returns the number of items in this selector.
@@ -204,6 +272,17 @@ var ListSelector = /** @class */ (function (_super) {
     };
     ListSelector.prototype.onItemRemovedEvent = function (key) {
         this.listSelectorEvents.onItemRemoved.dispatch(this, key);
+    };
+    /**
+     * Fired after the selector's effective item state has changed.
+     *
+     * This includes item additions/removals, order changes, localized label changes,
+     * and aria-label changes. The event is dispatched only after `items` and
+     * `selectedItem` have been fully synchronized, so listeners always observe
+     * the final state.
+     */
+    ListSelector.prototype.onItemsChangedEvent = function () {
+        this.listSelectorEvents.onItemsChanged.dispatch(this);
     };
     ListSelector.prototype.onItemSelectedEvent = function (key) {
         this.listSelectorEvents.onItemSelected.dispatch(this, key);
@@ -246,6 +325,23 @@ var ListSelector = /** @class */ (function (_super) {
          */
         get: function () {
             return this.listSelectorEvents.onItemRemoved.getEvent();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(ListSelector.prototype, "onItemsChanged", {
+        /**
+         * Gets the event that is fired after the selector's effective item state has changed.
+         *
+         * Includes additions/removals, order changes, localized label changes, and
+         * aria-label changes. Dispatched after internal state has been fully synchronized.
+         *
+         * Use this to rebuild from {@link getItems()} when the effective list changes.
+         *
+         * @returns {Event<ListSelector<Config>, NoArgs>}
+         */
+        get: function () {
+            return this.listSelectorEvents.onItemsChanged.getEvent();
         },
         enumerable: false,
         configurable: true
