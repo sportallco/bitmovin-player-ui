@@ -218,6 +218,10 @@ export interface UIComponentConfigMap {
   /**
    * @category Components
    */
+  BackButton?: Partial<ButtonConfig>;
+  /**
+   * @category Components
+   */
   CastStatusOverlay?: Partial<ContainerConfig>;
   /**
    * @category Components
