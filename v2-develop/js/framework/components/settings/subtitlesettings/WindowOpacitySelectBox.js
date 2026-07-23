@@ -57,7 +57,9 @@ var WindowOpacitySelectBox = /** @class */ (function (_super) {
         this.settingsManager.windowOpacity.onChanged.subscribe(function (sender, property) {
             _this.selectItem(property.value);
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    WindowOpacitySelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.windowOpacity.isSet()) {
             this.selectItem(this.settingsManager.windowOpacity.value);
         }

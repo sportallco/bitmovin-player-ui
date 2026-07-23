@@ -21,6 +21,7 @@ var Container_1 = require("./Container");
 var EcoModeToggleButton_1 = require("./buttons/EcoModeToggleButton");
 var Label_1 = require("./labels/Label");
 var SettingsPanelItem_1 = require("./settings/SettingsPanelItem");
+var ToggleSettingsPanelItem_1 = require("./settings/ToggleSettingsPanelItem");
 /**
  * @category Containers
  */
@@ -40,7 +41,7 @@ var EcoModeContainer = /** @class */ (function (_super) {
             text: "".concat(_this.savedEmissons.toFixed(4), " gCO2"),
             cssClass: 'ui-label-savedEnergy',
         });
-        _this.ecoModeToggleButtonItem = new SettingsPanelItem_1.SettingsPanelItem({
+        _this.ecoModeToggleButtonItem = new ToggleSettingsPanelItem_1.ToggleSettingsPanelItem({
             label: labelEcoMode,
             settingComponent: ecoModeToggleButton,
         });

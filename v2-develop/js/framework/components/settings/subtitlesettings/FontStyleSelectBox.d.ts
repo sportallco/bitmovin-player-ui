@@ -9,4 +9,5 @@ import { UIInstanceManager } from '../../../UIManager';
 export declare class FontStyleSelectBox extends SubtitleSettingSelectBox {
     constructor(config: SubtitleSettingSelectBoxConfig);
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
+    private initFromSettings;
 }

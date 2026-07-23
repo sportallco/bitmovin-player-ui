@@ -211,6 +211,13 @@ export declare class DOM {
      */
     off(eventName: string, eventHandler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): DOM;
     /**
+     * Resolves when the next CSS transition on the first element finishes or is canceled.
+     * A transition property is required so unrelated or bubbling transitions do not resolve the promise too early.
+     * @param propertyName CSS transition property to wait for
+     * @returns {Promise<void>}
+     */
+    waitForTransitionEnd(propertyName: string): Promise<void>;
+    /**
      * Adds the specified class(es) to all elements.
      * @param className the class(es) to add, multiple classes separated by space
      * @returns {DOM}

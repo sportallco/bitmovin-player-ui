@@ -47,7 +47,7 @@ var SettingsPanelItem = /** @class */ (function (_super) {
             labelStyle: Label_1.LabelStyle.Text,
         }, _this.config);
         var label = config.label;
-        if (label !== null) {
+        if (label != null) {
             if (label instanceof Component_1.Component) {
                 _this.label = label;
             }

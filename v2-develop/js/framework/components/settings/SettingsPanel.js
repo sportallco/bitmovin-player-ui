@@ -70,6 +70,8 @@ var SettingsPanel = /** @class */ (function (_super) {
             hideDelay: 5000,
             pageTransitionAnimation: true,
             stateResetDelay: 5000,
+            hideOnControlsHide: true,
+            hideOnOtherSettingsPanelOpening: true,
         }, _this.config);
         _this.activePage = _this.getRootPage();
         _this.onActivePageChangedEvent();
@@ -169,9 +171,11 @@ var SettingsPanel = /** @class */ (function (_super) {
         this.getRootPage().onSettingsStateChanged.subscribe(function () {
             _this.onSettingsStateChangedEvent();
         });
-        uimanager.onControlsHide.subscribe(function () {
-            _this.hide();
-        });
+        if (config.hideOnControlsHide) {
+            uimanager.onControlsHide.subscribe(function () {
+                _this.hide();
+            });
+        }
         uimanager.onControlsShow.subscribe(function () {
             if (_this.currentState !== null) {
                 _this.show();
@@ -295,10 +299,12 @@ var SettingsPanel = /** @class */ (function (_super) {
         this.updateComponents();
     };
     SettingsPanel.prototype.suspendHideTimeout = function () {
-        this.hideTimeout.suspend();
+        var _a;
+        (_a = this.hideTimeout) === null || _a === void 0 ? void 0 : _a.suspend();
     };
     SettingsPanel.prototype.resumeHideTimeout = function () {
-        this.hideTimeout.resume(true);
+        var _a;
+        (_a = this.hideTimeout) === null || _a === void 0 ? void 0 : _a.resume(true);
     };
     SettingsPanel.prototype.updateActivePageClass = function () {
         var _this = this;

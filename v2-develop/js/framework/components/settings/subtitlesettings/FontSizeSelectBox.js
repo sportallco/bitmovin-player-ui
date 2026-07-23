@@ -79,6 +79,12 @@ var FontSizeSelectBox = /** @class */ (function (_super) {
         });
         // init
         this.populateItemsWithFilter();
+        this.initFromSettings();
+    };
+    FontSizeSelectBox.prototype.initFromSettings = function () {
+        if (this.settingsManager.fontSize.isSet()) {
+            this.toggleOverlayClass('fontsize-' + this.settingsManager.fontSize.value);
+        }
     };
     return FontSizeSelectBox;
 }(SubtitleSettingSelectBox_1.SubtitleSettingSelectBox));

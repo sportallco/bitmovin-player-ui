@@ -44,14 +44,6 @@ var WindowColorSelectBox = /** @class */ (function (_super) {
         this.addItem('cyan', i18n_1.i18n.getLocalizer('colors.cyan'));
         this.addItem('yellow', i18n_1.i18n.getLocalizer('colors.yellow'));
         this.addItem('magenta', i18n_1.i18n.getLocalizer('colors.magenta'));
-        var setColorAndOpacity = function () {
-            if (_this.settingsManager.windowColor.isSet() && _this.settingsManager.windowOpacity.isSet()) {
-                _this.toggleOverlayClass('windowcolor-' + _this.settingsManager.windowColor.value + _this.settingsManager.windowOpacity.value);
-            }
-            else {
-                _this.toggleOverlayClass(null);
-            }
-        };
         this.onItemSelectionChanged.subscribe(function (sender, key) {
             _this.settingsManager.windowColor.value = key;
         });
@@ -66,14 +58,25 @@ var WindowColorSelectBox = /** @class */ (function (_super) {
                 _this.settingsManager.windowOpacity.value = '100';
             }
             _this.selectItem(property.value);
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
         this.settingsManager.windowOpacity.onChanged.subscribe(function () {
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    WindowColorSelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.windowColor.isSet()) {
             this.selectItem(this.settingsManager.windowColor.value);
+            this.setColorAndOpacity();
+        }
+    };
+    WindowColorSelectBox.prototype.setColorAndOpacity = function () {
+        if (this.settingsManager.windowColor.isSet() && this.settingsManager.windowOpacity.isSet()) {
+            this.toggleOverlayClass('windowcolor-' + this.settingsManager.windowColor.value + this.settingsManager.windowOpacity.value);
+        }
+        else {
+            this.toggleOverlayClass(null);
         }
     };
     return WindowColorSelectBox;

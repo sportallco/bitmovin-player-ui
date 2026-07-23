@@ -28,8 +28,7 @@ exports.SettingsPanelNavigationGroup = exports.SettingsPanelNavigationGroupConfi
 var NavigationGroup_1 = require("./NavigationGroup");
 var types_1 = require("./types");
 var resolveAllComponents_1 = require("./helper/resolveAllComponents");
-var SettingsPanelSelectOption_1 = require("../components/settings/SettingsPanelSelectOption");
-var DynamicSettingsPanelItem_1 = require("../components/settings/DynamicSettingsPanelItem");
+var InteractiveSettingsPanelItem_1 = require("../components/settings/InteractiveSettingsPanelItem");
 var SettingsPanelNavigationGroupConfig = /** @class */ (function () {
     function SettingsPanelNavigationGroupConfig() {
     }
@@ -69,10 +68,7 @@ var SettingsPanelNavigationGroup = /** @class */ (function (_super) {
         var pageComponents = activeSettingsPanelPage.getItems();
         var componentsToConsider = [];
         pageComponents.forEach(function (component) {
-            if (component instanceof SettingsPanelSelectOption_1.SettingsPanelSelectOption) {
-                componentsToConsider.push(component);
-            }
-            else if (component instanceof DynamicSettingsPanelItem_1.DynamicSettingsPanelItem) {
+            if (component instanceof InteractiveSettingsPanelItem_1.InteractiveSettingsPanelItem) {
                 componentsToConsider.push(component);
             }
             else {

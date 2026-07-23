@@ -28,6 +28,16 @@ export interface SettingsPanelConfig extends ContainerConfig {
      * Default: 5 seconds (5000)
      */
     stateResetDelay?: number;
+    /**
+     * Specifies if the settings panel should hide when the UI controls hide.
+     * Default: true
+     */
+    hideOnControlsHide?: boolean;
+    /**
+     * Specifies if the settings panel should be hidden when another settings panel is opened.
+     * Default: true
+     */
+    hideOnOtherSettingsPanelOpening?: boolean;
 }
 /**
  * State interface for preserving settings panel navigation and scroll position
@@ -75,7 +85,7 @@ export declare class SettingsPanel<Config extends SettingsPanelConfig> extends C
     private resetStateTimerId;
     private shouldResetStateImmediately;
     private settingsPanelEvents;
-    private hideTimeout;
+    private hideTimeout?;
     constructor(config: Config);
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
     /**

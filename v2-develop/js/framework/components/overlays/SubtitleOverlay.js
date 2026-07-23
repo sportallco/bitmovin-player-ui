@@ -49,6 +49,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         _this.config = _this.mergeConfig(config, {
             cssClass: 'ui-subtitle-overlay',
             enableCea608CaptionFormatting: true,
+            enableCea608CaptionPositioning: true,
         }, _this.config);
         return _this;
     }
@@ -129,7 +130,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
                 _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE));
                 var isCea608PushupTransitionEnabled = !_this.getDomElement().hasClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
                 if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated && isCea608PushupTransitionEnabled) {
-                    awaitTransitionEnd(_this.getDomElement()).then(_this.ensureCea608GridSizeUpdated);
+                    _this.getDomElement().waitForTransitionEnd('bottom').then(_this.ensureCea608GridSizeUpdated);
                 }
             }
         });
@@ -138,7 +139,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
                 _this.getDomElement().removeClass(_this.prefixCss(SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE));
                 var isCea608PushupTransitionEnabled = !_this.getDomElement().hasClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA608_PUSHUP_DISABLED));
                 if (_this.cea608Enabled && _this.ensureCea608GridSizeUpdated && isCea608PushupTransitionEnabled) {
-                    awaitTransitionEnd(_this.getDomElement()).then(_this.ensureCea608GridSizeUpdated);
+                    _this.getDomElement().waitForTransitionEnd('bottom').then(_this.ensureCea608GridSizeUpdated);
                 }
             }
         });
@@ -201,7 +202,9 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         if (isCea608SubtitleCue(event)) {
             event.position.row = event.position.row || 0;
             event.position.column = event.position.column || 0;
-            region = region || "cea608-row-".concat(event.position.row);
+            if (this.isCea608PositioningEnabled()) {
+                region = region || "cea608-row-".concat(event.position.row);
+            }
         }
         var label = new SubtitleLabel({
             // Prefer the HTML subtitle text if set, else try generating a image tag as string from the image attribute,
@@ -238,6 +241,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         var windowMargin;
         /** Flag telling if the CEA-608 rendering mode is currently enabled */
         this.cea608Enabled = false;
+        var cea608FormattingClassAdded = false;
         /** Track last known grid params to avoid unnecessary recalculations */
         var lastCeaGridRecalculation = { overlayWidth: 0, overlayHeight: 0, fontSizeFactor: 0 };
         var settingsManager = uimanager.getSubtitleSettingsManager();
@@ -372,31 +376,36 @@ var SubtitleOverlay = /** @class */ (function (_super) {
         });
         this.preprocessLabelEventCallback.subscribe(function (event, label) {
             if (!isCea608SubtitleCue(event)) {
-                // Skip all non-CEA608 cues
                 return;
             }
-            if (!_this.cea608Enabled) {
-                _this.cea608Enabled = true;
-                _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608));
-                if (_this.isCea608FormattingEnabled()) {
-                    _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608_FORMATTING));
+            if (_this.isCea608PositioningEnabled()) {
+                if (!_this.cea608Enabled) {
+                    _this.cea608Enabled = true;
+                    _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608));
+                    if (_this.isCea608FormattingEnabled()) {
+                        _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608_FORMATTING));
+                    }
                 }
+                var leftOffset = event.position.column * SubtitleOverlay.CEA608_COLUMN_OFFSET + '%';
+                if (leftOffset === '0%') {
+                    // ensure that a little of the window still shows for better readability
+                    leftOffset = SubtitleOverlay.DEFAULT_CAPTION_LEFT_OFFSET;
+                }
+                var labelCss = {
+                    left: leftOffset,
+                    'font-size': "".concat(fontSize, "px"),
+                    'line-height': "".concat(rowHeight - windowMargin, "px"),
+                };
+                if (_this.isCea608FormattingEnabled()) {
+                    labelCss['letter-spacing'] = "".concat(fontLetterSpacing, "px");
+                }
+                label.getDomElement().css(labelCss);
+                label.regionStyle = "margin: ".concat(windowMargin / 2, "px; height: ").concat(rowHeight, "px");
             }
-            var leftOffset = event.position.column * SubtitleOverlay.CEA608_COLUMN_OFFSET + '%';
-            if (leftOffset === '0%') {
-                // ensure that a little of the window still shows for better readability
-                leftOffset = SubtitleOverlay.DEFAULT_CAPTION_LEFT_OFFSET;
+            else if (_this.isCea608FormattingEnabled() && !cea608FormattingClassAdded) {
+                cea608FormattingClassAdded = true;
+                _this.getDomElement().addClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608_FORMATTING));
             }
-            var labelCss = {
-                left: leftOffset,
-                'font-size': "".concat(fontSize, "px"),
-                'line-height': "".concat(rowHeight - windowMargin, "px"),
-            };
-            if (_this.isCea608FormattingEnabled()) {
-                labelCss['letter-spacing'] = "".concat(fontLetterSpacing, "px");
-            }
-            label.getDomElement().css(labelCss);
-            label.regionStyle = "margin: ".concat(windowMargin / 2, "px; height: ").concat(rowHeight, "px");
         });
         var reset = function () {
             _this.getDomElement().removeClass(_this.prefixCss(SubtitleOverlay.CLASS_CEA_608));
@@ -406,6 +415,7 @@ var SubtitleOverlay = /** @class */ (function (_super) {
                 lastCeaGridRecalculation = { overlayWidth: 0, overlayHeight: 0, fontSizeFactor: 0 };
             }
             _this.cea608Enabled = false;
+            cea608FormattingClassAdded = false;
         };
         player.on(player.exports.PlayerEvent.CueExit, function () {
             if (!_this.subtitleManager.hasCues) {
@@ -436,6 +446,10 @@ var SubtitleOverlay = /** @class */ (function (_super) {
     SubtitleOverlay.prototype.isCea608FormattingEnabled = function () {
         var _a;
         return ((_a = this.config) === null || _a === void 0 ? void 0 : _a.enableCea608CaptionFormatting) !== false;
+    };
+    SubtitleOverlay.prototype.isCea608PositioningEnabled = function () {
+        var _a;
+        return ((_a = this.config) === null || _a === void 0 ? void 0 : _a.enableCea608CaptionPositioning) !== false;
     };
     SubtitleOverlay.CLASS_CONTROLBAR_VISIBLE = 'controlbar-visible';
     SubtitleOverlay.CLASS_CEA_608 = 'cea608';
@@ -767,19 +781,4 @@ var SubtitleRegionContainer = /** @class */ (function (_super) {
 exports.SubtitleRegionContainer = SubtitleRegionContainer;
 function isCea608SubtitleCue(cue) {
     return cue.position != null;
-}
-function awaitTransitionEnd(domElement) {
-    var hasTransition = getComputedStyle(domElement.get(0)).transitionProperty !== 'none';
-    if (!hasTransition) {
-        return Promise.resolve();
-    }
-    return new Promise(function (resolve) {
-        var transitionHandler = function () {
-            domElement.off('transitionend', transitionHandler);
-            domElement.off('transitioncancel', transitionHandler);
-            resolve();
-        };
-        domElement.on('transitionend', transitionHandler);
-        domElement.on('transitioncancel', transitionHandler);
-    });
 }

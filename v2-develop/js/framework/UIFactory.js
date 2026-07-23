@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -49,6 +38,7 @@ var SettingsToggleButton_1 = require("./components/settings/SettingsToggleButton
 var FullscreenToggleButton_1 = require("./components/buttons/FullscreenToggleButton");
 var UIContainer_1 = require("./components/UIContainer");
 var BufferingOverlay_1 = require("./components/overlays/BufferingOverlay");
+var PlayerContextMenu_1 = require("./components/contextmenu/PlayerContextMenu");
 var PlaybackToggleOverlay_1 = require("./components/overlays/PlaybackToggleOverlay");
 var CastStatusOverlay_1 = require("./components/overlays/CastStatusOverlay");
 var TitleBar_1 = require("./components/TitleBar");
@@ -68,7 +58,10 @@ var SpatialNavigation_1 = require("./spatialnavigation/SpatialNavigation");
 var RootNavigationGroup_1 = require("./spatialnavigation/RootNavigationGroup");
 var SettingsPanelNavigationGroup_1 = require("./spatialnavigation/SettingsPanelNavigationGroup");
 var EcoModeContainer_1 = require("./components/EcoModeContainer");
+var PersistentPreferencesToggleButton_1 = require("./components/buttons/PersistentPreferencesToggleButton");
 var DynamicSettingsPanelItem_1 = require("./components/settings/DynamicSettingsPanelItem");
+var ToggleSettingsPanelItem_1 = require("./components/settings/ToggleSettingsPanelItem");
+var Label_1 = require("./components/labels/Label");
 var TouchControlOverlay_1 = require("./components/overlays/TouchControlOverlay");
 var AdStatusOverlay_1 = require("./components/ads/AdStatusOverlay");
 var DismissClickOverlay_1 = require("./components/overlays/DismissClickOverlay");
@@ -76,6 +69,7 @@ var AdMessageLabel_1 = require("./components/ads/AdMessageLabel");
 var FocusableContainer_1 = require("./spatialnavigation/FocusableContainer");
 var BrowserUtils_1 = require("./utils/BrowserUtils");
 var RecommendationOverlayNavigationGroup_1 = require("./spatialnavigation/RecommendationOverlayNavigationGroup");
+var PlayerInsightsPanel_1 = require("./components/panels/player-insights/PlayerInsightsPanel");
 /**
  * Provides factory methods to create Bitmovin provided UIs.
  */
@@ -100,40 +94,53 @@ var UIFactory;
         var smallScreenSwitchWidth = 800;
         return new UIManager_1.UIManager(player, [
             {
-                ui: UIFactory.defaultLayouts.emptyState(),
+                ui: UIFactory.defaultLayouts.emptyState,
                 condition: function (context) {
                     return !context.isSourceLoaded;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.empty,
             },
             {
-                ui: UIFactory.defaultLayouts.smallScreenAds(),
+                ui: UIFactory.defaultLayouts.smallScreenAds,
                 condition: function (context) {
                     return context.documentWidth < smallScreenSwitchWidth && context.isAd && context.adRequiresUi;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.smallScreenAds,
             },
             {
-                ui: UIFactory.defaultLayouts.smallScreen(),
+                ui: UIFactory.defaultLayouts.smallScreen,
                 condition: function (context) {
                     return !context.isAd && !context.adRequiresUi && context.documentWidth < smallScreenSwitchWidth;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.smallScreen,
             },
-            __assign(__assign({}, UIFactory.defaultLayouts.tvAds()), { condition: function (context) {
-                    return context.isTv && context.isAd && context.adRequiresUi;
-                } }),
-            __assign(__assign({}, UIFactory.defaultLayouts.tv()), { condition: function (context) {
-                    return context.isTv && !context.isAd && !context.adRequiresUi;
-                } }),
             {
-                ui: UIFactory.defaultLayouts.ads(),
+                ui: UIFactory.defaultLayouts.tvAds,
+                condition: function (context) {
+                    return context.isTv && context.isAd && context.adRequiresUi;
+                },
+                identifier: UIManager_1.UIVariantIdentifier.tvAds,
+            },
+            {
+                ui: UIFactory.defaultLayouts.tv,
+                condition: function (context) {
+                    return context.isTv && !context.isAd && !context.adRequiresUi;
+                },
+                identifier: UIManager_1.UIVariantIdentifier.tv,
+            },
+            {
+                ui: UIFactory.defaultLayouts.ads,
                 condition: function (context) {
                     return context.isAd && context.adRequiresUi;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.ads,
             },
             {
-                ui: UIFactory.defaultLayouts.main(config),
+                ui: function () { return UIFactory.defaultLayouts.main(config); },
                 condition: function (context) {
                     return !context.isAd && !context.adRequiresUi;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.main,
             },
         ], config);
     }
@@ -153,16 +160,18 @@ var UIFactory;
         if (config === void 0) { config = {}; }
         return new UIManager_1.UIManager(player, [
             {
-                ui: UIFactory.defaultLayouts.smallScreenAds(),
+                ui: UIFactory.defaultLayouts.smallScreenAds,
                 condition: function (context) {
                     return context.isAd && context.adRequiresUi;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.smallScreenAds,
             },
             {
-                ui: UIFactory.defaultLayouts.smallScreen(),
+                ui: UIFactory.defaultLayouts.smallScreen,
                 condition: function (context) {
                     return !context.isAd && !context.adRequiresUi;
                 },
+                identifier: UIManager_1.UIVariantIdentifier.smallScreen,
             },
         ], config);
     }
@@ -178,7 +187,12 @@ var UIFactory;
      */
     function buildCastReceiverUI(player, config) {
         if (config === void 0) { config = {}; }
-        return new UIManager_1.UIManager(player, UIFactory.defaultLayouts.castReceiver(config), config);
+        return new UIManager_1.UIManager(player, [
+            {
+                ui: function () { return UIFactory.defaultLayouts.castReceiver(config); },
+                identifier: UIManager_1.UIVariantIdentifier.castReceiver,
+            },
+        ], config);
     }
     UIFactory.buildCastReceiverUI = buildCastReceiverUI;
     /**
@@ -193,12 +207,20 @@ var UIFactory;
     function buildTvUI(player, config) {
         if (config === void 0) { config = {}; }
         return new UIManager_1.UIManager(player, [
-            __assign(__assign({}, UIFactory.defaultLayouts.tvAds()), { condition: function (context) {
+            {
+                ui: UIFactory.defaultLayouts.tvAds,
+                condition: function (context) {
                     return context.isAd && context.adRequiresUi;
-                } }),
-            __assign(__assign({}, UIFactory.defaultLayouts.tv()), { condition: function (context) {
+                },
+                identifier: UIManager_1.UIVariantIdentifier.tvAds,
+            },
+            {
+                ui: UIFactory.defaultLayouts.tv,
+                condition: function (context) {
                     return !context.isAd && !context.adRequiresUi;
-                } }),
+                },
+                identifier: UIManager_1.UIVariantIdentifier.tv,
+            },
         ], config);
     }
     UIFactory.buildTvUI = buildTvUI;
@@ -214,7 +236,12 @@ var UIFactory;
      */
     function buildSubtitleUI(player, config) {
         if (config === void 0) { config = {}; }
-        return new UIManager_1.UIManager(player, UIFactory.defaultLayouts.subtitle(), config);
+        return new UIManager_1.UIManager(player, [
+            {
+                ui: UIFactory.defaultLayouts.subtitle,
+                identifier: UIManager_1.UIVariantIdentifier.subtitle,
+            },
+        ], config);
     }
     UIFactory.buildSubtitleUI = buildSubtitleUI;
     /**
@@ -247,7 +274,9 @@ var UIFactory;
         function main(config) {
             if (config === void 0) { config = {}; }
             var subtitleOverlay = new SubtitleOverlay_1.SubtitleOverlay();
-            var settingsPanel = buildDefaultSettingsPanel(subtitleOverlay, undefined, config.ecoMode === true);
+            var playerInsightsPanel = BrowserUtils_1.BrowserUtils.isMobile ? null : new PlayerInsightsPanel_1.PlayerInsightsPanel({ hidden: true });
+            var playerContextMenu = playerInsightsPanel ? new PlayerContextMenu_1.PlayerContextMenu({ playerInsightsPanel: playerInsightsPanel }) : null;
+            var settingsPanel = buildDefaultSettingsPanel(subtitleOverlay, undefined, config.ecoMode === true, config.showPersistentPreferencesToggle === true && config.disableStorageApi !== true);
             var controlBar = new ControlBar_1.ControlBar({
                 components: [
                     new Container_1.Container({
@@ -281,7 +310,9 @@ var UIFactory;
                     }),
                 ],
             });
-            var conditionalComponents = [config.includeWatermark ? new Watermark_1.Watermark() : null].filter(function (e) { return e; });
+            var conditionalComponents = __spreadArray(__spreadArray([
+                config.includeWatermark ? new Watermark_1.Watermark() : null
+            ], (playerInsightsPanel ? [playerInsightsPanel] : []), true), (playerContextMenu ? [new DismissClickOverlay_1.DismissClickOverlay({ target: playerContextMenu }), playerContextMenu] : []), true).filter(function (e) { return e; });
             return new UIContainer_1.UIContainer({
                 components: __spreadArray(__spreadArray([
                     subtitleOverlay,
@@ -358,6 +389,8 @@ var UIFactory;
         defaultLayouts.ads = ads;
         function smallScreen() {
             var subtitleOverlay = new SubtitleOverlay_1.SubtitleOverlay();
+            var playerInsightsPanel = BrowserUtils_1.BrowserUtils.isMobile ? null : new PlayerInsightsPanel_1.PlayerInsightsPanel({ hidden: true });
+            var playerContextMenu = playerInsightsPanel ? new PlayerContextMenu_1.PlayerContextMenu({ playerInsightsPanel: playerInsightsPanel }) : null;
             var settingsPanel = buildDefaultSettingsPanel(subtitleOverlay, -1);
             var controlBar = new ControlBar_1.ControlBar({
                 components: [
@@ -390,7 +423,7 @@ var UIFactory;
                 ],
             });
             return new UIContainer_1.UIContainer({
-                components: [
+                components: __spreadArray(__spreadArray(__spreadArray(__spreadArray([
                     subtitleOverlay,
                     new BufferingOverlay_1.BufferingOverlay(),
                     new CastStatusOverlay_1.CastStatusOverlay(),
@@ -413,11 +446,13 @@ var UIFactory;
                                 cssClasses: ['titlebar-row'],
                             }),
                         ],
-                    }),
+                    })
+                ], (playerInsightsPanel ? [playerInsightsPanel] : []), true), [
                     new DismissClickOverlay_1.DismissClickOverlay({ target: settingsPanel }),
-                    settingsPanel,
+                    settingsPanel
+                ], false), (playerContextMenu ? [new DismissClickOverlay_1.DismissClickOverlay({ target: playerContextMenu }), playerContextMenu] : []), true), [
                     new ErrorMessageOverlay_1.ErrorMessageOverlay(),
-                ],
+                ], false),
                 cssClasses: ['ui-smallscreen'],
                 hidePlayerStateExceptions: [
                     PlayerUtils_1.PlayerUtils.PlayerState.Prepared,
@@ -668,9 +703,10 @@ var UIFactory;
         }
         defaultLayouts.emptyState = emptyState;
     })(defaultLayouts = UIFactory.defaultLayouts || (UIFactory.defaultLayouts = {}));
-    function buildDefaultSettingsPanel(subtitleOverlay, hideDelay, enableEcoMode) {
+    function buildDefaultSettingsPanel(subtitleOverlay, hideDelay, enableEcoMode, showPersistentPreferencesToggle) {
         if (hideDelay === void 0) { hideDelay = undefined; }
         if (enableEcoMode === void 0) { enableEcoMode = false; }
+        if (showPersistentPreferencesToggle === void 0) { showPersistentPreferencesToggle = false; }
         var settingsPanelConfig = {
             components: [],
             hidden: true,
@@ -734,6 +770,19 @@ var UIFactory;
         });
         mainSettingsPanelPage.addComponent(subtitleSelectItem);
         settingsPanel.addComponent(subtitleSettingsPanelPage);
+        // Added last so the opt-in toggle sits at the bottom of the settings list, out of the
+        // way of the primary playback settings.
+        if (showPersistentPreferencesToggle) {
+            var persistentPreferencesToggle = new PersistentPreferencesToggleButton_1.PersistentPreferencesToggleButton();
+            var persistentPreferencesLabel = new Label_1.Label({
+                text: i18n_1.i18n.getLocalizer('persistentPreferences'),
+                for: persistentPreferencesToggle.getConfig().id,
+            });
+            mainSettingsPanelPage.addComponent(new ToggleSettingsPanelItem_1.ToggleSettingsPanelItem({
+                label: persistentPreferencesLabel,
+                settingComponent: persistentPreferencesToggle,
+            }));
+        }
         return settingsPanel;
     }
 })(UIFactory || (exports.UIFactory = UIFactory = {}));

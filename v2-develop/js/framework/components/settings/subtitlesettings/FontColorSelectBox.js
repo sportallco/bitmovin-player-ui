@@ -44,14 +44,6 @@ var FontColorSelectBox = /** @class */ (function (_super) {
         this.addItem('cyan', i18n_1.i18n.getLocalizer('colors.cyan'));
         this.addItem('yellow', i18n_1.i18n.getLocalizer('colors.yellow'));
         this.addItem('magenta', i18n_1.i18n.getLocalizer('colors.magenta'));
-        var setColorAndOpacity = function () {
-            if (_this.settingsManager.fontColor.isSet() && _this.settingsManager.fontOpacity.isSet()) {
-                _this.toggleOverlayClass('fontcolor-' + _this.settingsManager.fontColor.value + _this.settingsManager.fontOpacity.value);
-            }
-            else {
-                _this.toggleOverlayClass(null);
-            }
-        };
         this.onItemSelectionChanged.subscribe(function (sender, key) {
             _this.settingsManager.fontColor.value = key;
         });
@@ -66,14 +58,25 @@ var FontColorSelectBox = /** @class */ (function (_super) {
                 _this.settingsManager.fontOpacity.value = '100';
             }
             _this.selectItem(property.value);
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
         this.settingsManager.fontOpacity.onChanged.subscribe(function () {
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    FontColorSelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.fontColor.isSet()) {
             this.selectItem(this.settingsManager.fontColor.value);
+            this.setColorAndOpacity();
+        }
+    };
+    FontColorSelectBox.prototype.setColorAndOpacity = function () {
+        if (this.settingsManager.fontColor.isSet() && this.settingsManager.fontOpacity.isSet()) {
+            this.toggleOverlayClass('fontcolor-' + this.settingsManager.fontColor.value + this.settingsManager.fontOpacity.value);
+        }
+        else {
+            this.toggleOverlayClass(null);
         }
     };
     return FontColorSelectBox;

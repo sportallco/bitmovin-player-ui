@@ -3,12 +3,13 @@ import { DOM } from './DOM';
 import { Component, ComponentConfig, ViewModeChangedEventArgs } from './components/Component';
 import { SeekBar, SeekBarMarker } from './components/seekbar/SeekBar';
 import { NoArgs, EventDispatcher, CancelEventArgs } from './EventDispatcher';
-import { TimelineMarker, UIConfig } from './UIConfig';
+import { RecommendationConfig, TimelineMarker, UIConfig } from './UIConfig';
 import { PlayerAPI, PlayerEvent } from 'bitmovin-player';
 import { VolumeController } from './utils/VolumeController';
 import { CustomVocabulary, Vocabularies, I18n, LanguageChangedArgument } from './localization/i18n';
 import { SpatialNavigation } from './spatialnavigation/SpatialNavigation';
 import { SubtitleSettingsManager } from './utils/SubtitleSettingsManager';
+import { UIPreferencesManager } from './utils/UIPreferencesManager';
 import { BufferingOverlay } from './components/overlays/BufferingOverlay';
 import { AdBreakTracker } from './utils/AdBreakTracker';
 /**
@@ -52,6 +53,52 @@ export interface InternalUIConfig extends UIConfig {
     };
     volumeController: VolumeController;
     adBreakTracker: AdBreakTracker;
+}
+/**
+ * API for managing recommendations displayed by the {@link RecommendationOverlay}.
+ */
+export interface RecommendationsApi {
+    /**
+     * Adds a recommendation which will be displayed in the {@link RecommendationOverlay}.
+     *
+     * Note:
+     * - Does not check for duplicated recommendations.
+     * - Dynamically added recommendations will be cleared when a new source is loaded into the Player.
+     */
+    add(recommendation: RecommendationConfig): void;
+    /**
+     * Removes a recommendation by reference and returns `true` if the recommendation has
+     * been part of the recommendations and successfully removed, or `false` if the recommendation
+     * could not be found and thus not removed.
+     */
+    remove(recommendation: RecommendationConfig): boolean;
+    /**
+     * Returns the list of all added recommendations in insertion order.
+     */
+    list(): RecommendationConfig[];
+}
+/**
+ * API for managing markers displayed on the playback timeline.
+ */
+export interface TimelineMarkersApi {
+    /**
+     * Adds a marker to the timeline.
+     *
+     * Note:
+     * - Does not check for duplicates/overlaps at the `time`.
+     * - Dynamically added timeline markers will be cleared when a new source is loaded into the Player.
+     */
+    add(timelineMarker: TimelineMarker): void;
+    /**
+     * Removes a marker from the timeline by reference and returns `true` if the marker has
+     * been part of the timeline and successfully removed, or `false` if the marker could not
+     * be found and thus not removed.
+     */
+    remove(timelineMarker: TimelineMarker): boolean;
+    /**
+     * Returns the list of all added timeline markers in insertion order.
+     */
+    list(): TimelineMarker[];
 }
 /**
  * The context that will be passed to a {@link UIConditionResolver} to determine if it's conditions fulfil the context.
@@ -103,12 +150,61 @@ export interface UIConditionResolver {
     (context: UIConditionContext): boolean;
 }
 /**
+ * Identifier for the different {@link UIVariant}s.
+ */
+export declare enum UIVariantIdentifier {
+    main = "main",
+    ads = "ads",
+    smallScreen = "smallScreen",
+    smallScreenAds = "smallScreenAds",
+    tv = "tv",
+    tvAds = "tvAds",
+    subtitle = "subtitle",
+    castReceiver = "castReceiver",
+    empty = "empty"
+}
+/**
+ * Lazily creates a UI variant the first time it is selected.
+ *
+ * If the variant also needs {@link SpatialNavigation}, return it together with the created UI so both are built from the
+ * same component instances.
+ */
+export interface UIVariantFactory {
+    /**
+     * Creates the UI container, optionally together with matching spatial navigation.
+     */
+    ui: () => UIContainer | Pick<UIVariant, 'ui' | 'spatialNavigation'>;
+    /**
+     * Determines whether this variant can be displayed for the current player and document state.
+     */
+    condition?: UIConditionResolver;
+    /**
+     * Stable identifier for this variant, used to scope variant-specific component config in
+     * {@link UIConfig.componentConfigOverrides}.
+     */
+    identifier?: UIVariantIdentifier;
+}
+/**
  * Associates a UI instance with an optional {@link UIConditionResolver} that determines if the UI should be displayed.
  */
 export interface UIVariant {
+    /**
+     * The UI container for this variant.
+     */
     ui: UIContainer;
+    /**
+     * Determines whether this variant can be displayed for the current player and document state.
+     */
     condition?: UIConditionResolver;
+    /**
+     * Spatial navigation instance used by this variant, if keyboard or remote-control navigation is enabled.
+     */
     spatialNavigation?: SpatialNavigation;
+    /**
+     * Stable identifier for this variant, used to scope variant-specific component config in
+     * {@link UIConfig.componentConfigOverrides}.
+     */
+    identifier?: UIVariantIdentifier;
 }
 export interface ActiveUiChangedArgs extends NoArgs {
     /**
@@ -130,7 +226,10 @@ export declare class UIManager {
     private managerPlayerWrapper;
     private focusVisibilityTracker;
     private subtitleSettingsManager;
+    private uiPreferencesManager;
     private shadowDomManager;
+    private recommendationsApi;
+    private timelineMarkersApi;
     private events;
     /**
      * Creates a UI manager with a single UI variant that will be permanently shown.
@@ -152,7 +251,7 @@ export declare class UIManager {
      * @param uiVariants a list of UI variants that will be dynamically switched
      * @param uiconfig optional UI configuration
      */
-    constructor(player: PlayerAPI, uiVariants: UIVariant[], uiconfig?: UIConfig);
+    constructor(player: PlayerAPI, uiVariants: Array<UIVariant | UIVariantFactory>, uiconfig?: UIConfig);
     /**
      * Exposes i18n.getLocalizer() function
      * @returns {I18nApi.getLocalizer()}
@@ -164,18 +263,20 @@ export declare class UIManager {
      */
     static setLocalizationConfig(localizationConfig: LocalizationConfig): void;
     getSubtitleSettingsManager(): SubtitleSettingsManager;
+    getUIPreferencesManager(): UIPreferencesManager;
     getConfig(): UIConfig;
     /**
      * Returns the list of UI variants as passed into the constructor of {@link UIManager}.
-     * @returns {UIVariant[]} the list of available UI variants
+     * @returns {Array<UIVariant | UIVariantFactory>} the list of available UI variants
      */
-    getUiVariants(): UIVariant[];
+    getUiVariants(): Array<UIVariant | UIVariantFactory>;
     /**
      * Switches to a UI variant from the list returned by {@link getUiVariants}.
-     * @param {UIVariant} uiVariant the UI variant to switch to
+     * @param {UIVariant | UIVariantFactory} uiVariant or UIVariantFactory the UI variant to switch to
      * @param {() => void} onShow a callback that is executed just before the new UI variant is shown
      */
-    switchToUiVariant(uiVariant: UIVariant, onShow?: () => void): void;
+    switchToUiVariant(uiVariant: UIVariant | UIVariantFactory, onShow?: () => void): void;
+    private switchToUiInstance;
     /**
      * Triggers a UI variant switch as triggered by events when automatic switching is enabled. It allows to overwrite
      * properties of the {@link UIConditionContext}.
@@ -210,17 +311,31 @@ export declare class UIManager {
      */
     get activeUi(): UIInstanceManager;
     /**
+     * API for managing recommendations displayed by the {@link RecommendationOverlay}.
+     */
+    get recommendations(): RecommendationsApi;
+    /**
+     * API for managing markers displayed on the playback timeline.
+     */
+    get timelineMarkers(): TimelineMarkersApi;
+    /**
      * Returns the list of all added markers in undefined order.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.list} instead.
      */
     getTimelineMarkers(): TimelineMarker[];
     /**
      * Adds a marker to the timeline. Does not check for duplicates/overlaps at the `time`.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.add} instead.
      */
     addTimelineMarker(timelineMarker: TimelineMarker): void;
     /**
      * Removes a marker from the timeline (by reference) and returns `true` if the marker has
      * been part of the timeline and successfully removed, or `false` if the marker could not
      * be found and thus not removed.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.remove} instead.
      */
     removeTimelineMarker(timelineMarker: TimelineMarker): boolean;
 }
@@ -239,22 +354,38 @@ export interface SeekPreviewArgs extends NoArgs {
  */
 export declare class UIInstanceManager {
     private playerWrapper;
-    private ui;
+    private uiVariant;
+    private uiContainer?;
     private config;
     private subtitleSettingsManager;
+    private uiPreferencesManager;
     protected spatialNavigation?: SpatialNavigation;
     readonly uiWrapperElement: DOM;
     private events;
-    constructor(player: PlayerAPI, ui: UIContainer, config: InternalUIConfig, subtitleSettingsManager: SubtitleSettingsManager, uiWrapperElement: DOM, spatialNavigation?: SpatialNavigation);
+    constructor(player: PlayerAPI, uiVariant: UIVariant | UIVariantFactory, config: InternalUIConfig, subtitleSettingsManager: SubtitleSettingsManager, uiPreferencesManager: UIPreferencesManager, uiWrapperElement: DOM);
     getSubtitleSettingsManager(): SubtitleSettingsManager;
+    getUIPreferencesManager(): UIPreferencesManager;
     getConfig(): InternalUIConfig;
+    get conditionResolver(): UIConditionResolver;
+    resolveUI(): UIContainer;
     getUI(): UIContainer;
+    isUIResolved(): boolean;
     getPlayer(): PlayerAPI;
     /**
      * Fires when the UI is fully configured and added to the DOM.
      * @returns {EventDispatcher}
      */
     get onConfigured(): EventDispatcher<UIContainer, NoArgs>;
+    /**
+     * Fires when this UI instance becomes the active UI variant.
+     * @returns {EventDispatcher}
+     */
+    get onActive(): EventDispatcher<UIContainer, NoArgs>;
+    /**
+     * Fires when this UI instance stops being the active UI variant.
+     * @returns {EventDispatcher}
+     */
+    get onInactive(): EventDispatcher<UIContainer, NoArgs>;
     /**
      * Fires when a seek starts.
      * @returns {EventDispatcher}

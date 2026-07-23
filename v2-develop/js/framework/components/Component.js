@@ -5,6 +5,7 @@ var Guid_1 = require("../utils/Guid");
 var DOM_1 = require("../DOM");
 var EventDispatcher_1 = require("../EventDispatcher");
 var i18n_1 = require("../localization/i18n");
+var ComponentConfigManager_1 = require("../utils/ComponentConfigManager");
 var ViewMode;
 (function (ViewMode) {
     /**
@@ -27,6 +28,12 @@ var Component = /** @class */ (function () {
     /**
      * Constructs a component with an optionally supplied config. All subclasses must call the constructor of their
      * superclass and then merge their configuration into the component's configuration.
+     *
+     * Side effect: while a {@link UIConfig.componentConfigOverrides} construction context is active, matching component
+     * overrides are merged into the passed `config` object before subclass constructors continue. This makes
+     * constructor-time reads in subclasses see the same component override values that `mergeConfig()` uses for the final
+     * config.
+     *
      * @param config the configuration for the component
      */
     function Component(config) {
@@ -106,6 +113,7 @@ var Component = /** @class */ (function () {
             onDisabled: new EventDispatcher_1.EventDispatcher(),
             onFocusChanged: new EventDispatcher_1.EventDispatcher(),
         };
+        Object.assign(config, ComponentConfigManager_1.ComponentConfigManager.getConfigFor(this.constructor));
         // Create the configuration for this component
         this.config = this.mergeConfig(config, {
             tag: 'div',
