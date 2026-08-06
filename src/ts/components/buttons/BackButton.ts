@@ -2,6 +2,7 @@ import { ButtonConfig, Button } from './Button';
 import { UIInstanceManager } from '../../UIManager';
 import { PlayerAPI } from 'bitmovin-player';
 import { i18n } from '../../localization/i18n';
+import { getCustomMessageHandler } from '../../utils/CustomMessageHandler';
 
 export class BackButton extends Button<ButtonConfig> {
   constructor(config: ButtonConfig = {}) {
@@ -21,9 +22,7 @@ export class BackButton extends Button<ButtonConfig> {
     super.configure(player, uimanager);
 
     this.onClick.subscribe(() => {
-      const customMessageHandler = (window as any).bitmovin?.customMessageHandler as
-        | { sendAsynchronous: (name: string, data?: string) => void }
-        | undefined;
+      const customMessageHandler = getCustomMessageHandler();
       if (customMessageHandler) {
         customMessageHandler.sendAsynchronous('goBack');
       }

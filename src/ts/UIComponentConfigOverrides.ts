@@ -386,6 +386,10 @@ export interface UIComponentConfigMap {
   /**
    * @category Components
    */
+  RadioModeButton?: Partial<ButtonConfig>;
+  /**
+   * @category Components
+   */
   RecommendationItem?: Partial<RecommendationItemConfig>;
   /**
    * @category Components

@@ -25,6 +25,8 @@ import { VRToggleButton } from './components/buttons/VRToggleButton';
 import { SettingsToggleButton } from './components/settings/SettingsToggleButton';
 import { FullscreenToggleButton } from './components/buttons/FullscreenToggleButton';
 import { BackButton } from './components/buttons/BackButton';
+import { RadioModeButton } from './components/buttons/RadioModeButton';
+import { getCustomMessageHandler } from './utils/CustomMessageHandler';
 import { UIContainer } from './components/UIContainer';
 import { BufferingOverlay } from './components/overlays/BufferingOverlay';
 import { PlayerContextMenu } from './components/contextmenu/PlayerContextMenu';
@@ -290,6 +292,7 @@ export namespace UIFactory {
         config.ecoMode === true,
         config.showPersistentPreferencesToggle === true && config.disableStorageApi !== true,
       );
+      const radioModeButton = buildRadioModeButton();
       const controlBar = new ControlBar({
         components: [
           new Container({
@@ -315,6 +318,7 @@ export namespace UIFactory {
               new PictureInPictureToggleButton(),
               new AirPlayToggleButton(),
               new CastToggleButton(),
+              ...(radioModeButton ? [radioModeButton] : []),
               new VRToggleButton(),
               new SettingsToggleButton({ settingsPanel: settingsPanel }),
               new FullscreenToggleButton(),
@@ -411,6 +415,7 @@ export namespace UIFactory {
       const playerContextMenu = playerInsightsPanel ? new PlayerContextMenu({ playerInsightsPanel }) : null;
 
       const settingsPanel = buildDefaultSettingsPanel(subtitleOverlay, -1);
+      const radioModeButton = buildRadioModeButton();
 
       const controlBar = new ControlBar({
         components: [
@@ -462,6 +467,7 @@ export namespace UIFactory {
                   new Spacer(),
                   new CastToggleButton(),
                   new AirPlayToggleButton(),
+                  ...(radioModeButton ? [radioModeButton] : []),
                   new VRToggleButton(),
                 ],
                 cssClasses: ['titlebar-row'],
@@ -746,6 +752,15 @@ export namespace UIFactory {
         cssClasses: ['ui', 'ui-empty-state'],
       });
     }
+  }
+
+  /**
+   * The radio mode button is only offered on regular web pages, where the embedding application handles the mode
+   * switch itself. Inside the WebView of the Android/iOS SDKs, which is the only environment providing a custom
+   * message handler, no component is added.
+   */
+  function buildRadioModeButton(): RadioModeButton | null {
+    return getCustomMessageHandler() ? null : new RadioModeButton();
   }
 
   function buildDefaultSettingsPanel(

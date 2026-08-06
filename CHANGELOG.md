@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `RadioModeButton` which toggles `window.isRadioModeActive` and notifies the embedding application about the change through an `isRadioModeActiveChange` `CustomEvent` on `window`. It is part of the default and small screen UI layouts on web pages and is left out inside the Android/iOS SDK WebViews.
+
 ## [4.17.0] - 2026-07-02
 
 ### Added
