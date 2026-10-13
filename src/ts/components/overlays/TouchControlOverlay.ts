@@ -7,6 +7,7 @@ import { Timeout } from '../../utils/Timeout';
 import { HTMLElementWithComponent } from '../../DOM';
 import { Label, LabelConfig } from '../labels/Label';
 import { i18n } from '../../localization/i18n';
+import { PlayerUtils } from '../../utils/PlayerUtils';
 
 export interface TouchControlOverlayConfig extends ContainerConfig {
   /**
@@ -114,7 +115,29 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
     let playerSeekTime = 0;
     let startSeekTime = 0;
 
-    this.doubleTapTimeout = new Timeout(this.config.seekDoubleTapTimeout, () => {
+    // Returns the current playback position in the domain we seek in:
+    // - live streams are seeked through the DVR window via timeShift (0 = live edge, negative = past)
+    // - VOD streams are seeked via the absolute current time
+    const getSeekStartPosition = (): number => {
+      return player.isLive() ? player.getTimeShift() : player.getCurrentTime();
+    };
+
+    // Seeks to the given target, clamped to the valid range, using the correct API for the stream type.
+    // On live this uses timeShift() (VOD's seek() has no effect on live streams), which is why the
+    // quick seek had no effect on lives before.
+    const seekToTarget = (target: number): number => {
+      if (player.isLive()) {
+        const clampedValue = PlayerUtils.clampValueToRange(target, player.getMaxTimeShift(), 0);
+        player.timeShift(clampedValue);
+        return clampedValue;
+      } else {
+        const clampedValue = PlayerUtils.clampValueToRange(target, 0, player.getDuration());
+        player.seek(clampedValue);
+        return clampedValue;
+      }
+    };
+
+    this.doubleTapTimeout = new Timeout(this.config.seekDoubleTapTimeout ?? 0, () => {
       this.couldBeDoubleTapping = false;
       startSeekTime = 0;
       setTimeout(() => this.hideSeekAnimationElements(), 150);
@@ -156,8 +179,7 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
     });
 
     this.touchControlEvents.onSeekBackward.subscribe(() => {
-      playerSeekTime -= this.config.seekTime;
-      player.seek(playerSeekTime);
+      playerSeekTime = seekToTarget(playerSeekTime - (this.config.seekTime ?? 0));
 
       this.seekBackwardLabel.setText(
         Math.abs(Math.round(playerSeekTime - startSeekTime)) +
@@ -171,8 +193,7 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
     });
 
     this.touchControlEvents.onSeekForward.subscribe(() => {
-      playerSeekTime += this.config.seekTime;
-      player.seek(playerSeekTime);
+      playerSeekTime = seekToTarget(playerSeekTime + (this.config.seekTime ?? 0));
 
       this.seekForwardLabel.setText(
         Math.abs(Math.round(playerSeekTime - startSeekTime)) +
@@ -187,7 +208,7 @@ export class TouchControlOverlay extends Container<TouchControlOverlayConfig> {
 
     this.touchControlEvents.onSingleClick.subscribe((_, e) => {
       uimanager.getUI().toggleUiShown();
-      playerSeekTime = player.getCurrentTime();
+      playerSeekTime = getSeekStartPosition();
       startSeekTime = playerSeekTime;
 
       const eventTarget = (e as Event).target as HTMLElementWithComponent;
