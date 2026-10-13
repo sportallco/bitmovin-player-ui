@@ -14,6 +14,8 @@ export declare namespace UIUtils {
         DownArrow = 40,
         Space = 32,
         End = 35,
-        Home = 36
+        Home = 36,
+        Comma = 188,
+        Period = 190
     }
 }

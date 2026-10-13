@@ -17,6 +17,11 @@ export declare namespace StorageUtils {
      */
     function getItem(key: string): string | null;
     /**
+     * Removes an item from localStorage.
+     * @param key the item's key
+     */
+    function removeItem(key: string): void;
+    /**
      * Stores an object into localStorage. The object will be serialized to JSON. The following types are supported
      * in addition to the default types:
      *  - ColorUtils.Color

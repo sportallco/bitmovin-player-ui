@@ -32,5 +32,7 @@ var UIUtils;
         KeyCode[KeyCode["Space"] = 32] = "Space";
         KeyCode[KeyCode["End"] = 35] = "End";
         KeyCode[KeyCode["Home"] = 36] = "Home";
+        KeyCode[KeyCode["Comma"] = 188] = "Comma";
+        KeyCode[KeyCode["Period"] = 190] = "Period";
     })(KeyCode = UIUtils.KeyCode || (UIUtils.KeyCode = {}));
 })(UIUtils || (exports.UIUtils = UIUtils = {}));

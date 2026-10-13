@@ -40,17 +40,6 @@ var CharacterEdgeSelectBox = /** @class */ (function (_super) {
         this.addItem('depressed', i18n_1.i18n.getLocalizer('settings.subtitles.characterEdge.depressed'));
         this.addItem('uniform', i18n_1.i18n.getLocalizer('settings.subtitles.characterEdge.uniform'));
         this.addItem('dropshadowed', i18n_1.i18n.getLocalizer('settings.subtitles.characterEdge.dropshadowed'));
-        var setColorAndEdgeType = function () {
-            if (_this.settingsManager.characterEdge.isSet() && _this.settingsManager.characterEdgeColor.isSet()) {
-                _this.toggleOverlayClass('characteredge-' +
-                    _this.settingsManager.characterEdge.value +
-                    '-' +
-                    _this.settingsManager.characterEdgeColor.value);
-            }
-            else {
-                _this.toggleOverlayClass(null);
-            }
-        };
         this.onItemSelectionChanged.subscribe(function (sender, key) {
             _this.settingsManager.characterEdge.value = key;
         });
@@ -65,14 +54,28 @@ var CharacterEdgeSelectBox = /** @class */ (function (_super) {
                 _this.settingsManager.characterEdgeColor.value = 'black';
             }
             _this.selectItem(property.value);
-            setColorAndEdgeType();
+            _this.setColorAndEdgeType();
         });
         this.settingsManager.characterEdgeColor.onChanged.subscribe(function () {
-            setColorAndEdgeType();
+            _this.setColorAndEdgeType();
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    CharacterEdgeSelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.characterEdge.isSet()) {
             this.selectItem(this.settingsManager.characterEdge.value);
+            this.setColorAndEdgeType();
+        }
+    };
+    CharacterEdgeSelectBox.prototype.setColorAndEdgeType = function () {
+        if (this.settingsManager.characterEdge.isSet() && this.settingsManager.characterEdgeColor.isSet()) {
+            this.toggleOverlayClass('characteredge-' +
+                this.settingsManager.characterEdge.value +
+                '-' +
+                this.settingsManager.characterEdgeColor.value);
+        }
+        else {
+            this.toggleOverlayClass(null);
         }
     };
     return CharacterEdgeSelectBox;

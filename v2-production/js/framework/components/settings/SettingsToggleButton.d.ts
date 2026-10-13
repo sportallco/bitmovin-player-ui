@@ -26,5 +26,6 @@ export interface SettingsToggleButtonConfig extends ToggleButtonConfig {
 export declare class SettingsToggleButton extends ToggleButton<SettingsToggleButtonConfig> {
     private visibleSettingsPanels;
     constructor(config: SettingsToggleButtonConfig);
+    private updateAriaPanelIdRefs;
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
 }

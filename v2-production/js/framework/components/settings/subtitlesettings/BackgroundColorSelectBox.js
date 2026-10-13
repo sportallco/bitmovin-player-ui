@@ -44,14 +44,6 @@ var BackgroundColorSelectBox = /** @class */ (function (_super) {
         this.addItem('cyan', i18n_1.i18n.getLocalizer('colors.cyan'));
         this.addItem('yellow', i18n_1.i18n.getLocalizer('colors.yellow'));
         this.addItem('magenta', i18n_1.i18n.getLocalizer('colors.magenta'));
-        var setColorAndOpacity = function () {
-            if (_this.settingsManager.backgroundColor.isSet() && _this.settingsManager.backgroundOpacity.isSet()) {
-                _this.toggleOverlayClass('bgcolor-' + _this.settingsManager.backgroundColor.value + _this.settingsManager.backgroundOpacity.value);
-            }
-            else {
-                _this.toggleOverlayClass(null);
-            }
-        };
         this.onItemSelectionChanged.subscribe(function (sender, key) {
             _this.settingsManager.backgroundColor.value = key;
         });
@@ -66,14 +58,25 @@ var BackgroundColorSelectBox = /** @class */ (function (_super) {
                 _this.settingsManager.backgroundOpacity.value = '100';
             }
             _this.selectItem(property.value);
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
         this.settingsManager.backgroundOpacity.onChanged.subscribe(function () {
-            setColorAndOpacity();
+            _this.setColorAndOpacity();
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    BackgroundColorSelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.backgroundColor.isSet()) {
             this.selectItem(this.settingsManager.backgroundColor.value);
+            this.setColorAndOpacity();
+        }
+    };
+    BackgroundColorSelectBox.prototype.setColorAndOpacity = function () {
+        if (this.settingsManager.backgroundColor.isSet() && this.settingsManager.backgroundOpacity.isSet()) {
+            this.toggleOverlayClass('bgcolor-' + this.settingsManager.backgroundColor.value + this.settingsManager.backgroundOpacity.value);
+        }
+        else {
+            this.toggleOverlayClass(null);
         }
     };
     return BackgroundColorSelectBox;

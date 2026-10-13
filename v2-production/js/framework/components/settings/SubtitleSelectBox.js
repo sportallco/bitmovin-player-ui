@@ -42,7 +42,7 @@ var SubtitleSelectBox = /** @class */ (function (_super) {
     __extends(SubtitleSelectBox, _super);
     function SubtitleSelectBox(config) {
         if (config === void 0) { config = {}; }
-        var _this = this;
+        var _this = _super.call(this, config) || this;
         var comparator = config.comparator
             ? function (itemA, itemB) {
                 if (itemA.key === SubtitleUtils_1.SubtitleSwitchHandler.SUBTITLES_OFF_KEY &&
@@ -58,7 +58,6 @@ var SubtitleSelectBox = /** @class */ (function (_super) {
                 return config.comparator(itemA, itemB);
             }
             : undefined;
-        _this = _super.call(this, __assign(__assign({}, config), { comparator: comparator })) || this;
         _this.config = _this.mergeConfig(__assign(__assign({}, config), { comparator: comparator }), {
             cssClasses: ['ui-subtitleselectbox'],
             ariaLabel: i18n_1.i18n.getLocalizer('subtitle.select'),

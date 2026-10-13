@@ -9,4 +9,6 @@ import { PlayerAPI } from 'bitmovin-player';
 export declare class CharacterEdgeSelectBox extends SubtitleSettingSelectBox {
     constructor(config: SubtitleSettingSelectBoxConfig);
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
+    private initFromSettings;
+    private setColorAndEdgeType;
 }

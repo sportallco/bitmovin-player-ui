@@ -56,7 +56,9 @@ var FontOpacitySelectBox = /** @class */ (function (_super) {
         this.settingsManager.fontOpacity.onChanged.subscribe(function (sender, property) {
             _this.selectItem(property.value);
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    FontOpacitySelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.fontOpacity.isSet()) {
             this.selectItem(this.settingsManager.fontOpacity.value);
         }

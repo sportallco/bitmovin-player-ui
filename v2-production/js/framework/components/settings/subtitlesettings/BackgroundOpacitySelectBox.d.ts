@@ -9,4 +9,5 @@ import { PlayerAPI } from 'bitmovin-player';
 export declare class BackgroundOpacitySelectBox extends SubtitleSettingSelectBox {
     constructor(config: SubtitleSettingSelectBoxConfig);
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
+    private initFromSettings;
 }

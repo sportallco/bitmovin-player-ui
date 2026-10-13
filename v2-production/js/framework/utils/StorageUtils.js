@@ -56,6 +56,21 @@ var StorageUtils;
     }
     StorageUtils.getItem = getItem;
     /**
+     * Removes an item from localStorage.
+     * @param key the item's key
+     */
+    function removeItem(key) {
+        if (shouldUseLocalStorage()) {
+            try {
+                window.localStorage.removeItem(key);
+            }
+            catch (e) {
+                console.debug("Failed to remove storage item ".concat(key), e);
+            }
+        }
+    }
+    StorageUtils.removeItem = removeItem;
+    /**
      * Stores an object into localStorage. The object will be serialized to JSON. The following types are supported
      * in addition to the default types:
      *  - ColorUtils.Color

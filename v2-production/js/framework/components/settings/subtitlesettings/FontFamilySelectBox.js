@@ -56,9 +56,12 @@ var FontFamilySelectBox = /** @class */ (function (_super) {
         this.onItemSelectionChanged.subscribe(function (sender, key) {
             _this.settingsManager.fontFamily.value = key;
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    FontFamilySelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.fontFamily.isSet()) {
             this.selectItem(this.settingsManager.fontFamily.value);
+            this.toggleOverlayClass('fontfamily-' + this.settingsManager.fontFamily.value);
         }
     };
     return FontFamilySelectBox;

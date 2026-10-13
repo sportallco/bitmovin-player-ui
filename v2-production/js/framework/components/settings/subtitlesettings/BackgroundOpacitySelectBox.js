@@ -57,7 +57,9 @@ var BackgroundOpacitySelectBox = /** @class */ (function (_super) {
         this.settingsManager.backgroundOpacity.onChanged.subscribe(function (sender, property) {
             _this.selectItem(property.value);
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    BackgroundOpacitySelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.backgroundOpacity.isSet()) {
             this.selectItem(this.settingsManager.backgroundOpacity.value);
         }

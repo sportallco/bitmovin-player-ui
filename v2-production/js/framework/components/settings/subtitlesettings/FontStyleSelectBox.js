@@ -34,7 +34,7 @@ var FontStyleSelectBox = /** @class */ (function (_super) {
     }
     FontStyleSelectBox.prototype.configure = function (player, uimanager) {
         var _this = this;
-        var _a, _b;
+        var _a;
         _super.prototype.configure.call(this, player, uimanager);
         this.addItem(null, i18n_1.i18n.getLocalizer('default'));
         this.addItem('italic', i18n_1.i18n.getLocalizer('settings.subtitles.font.style.italic'));
@@ -54,9 +54,13 @@ var FontStyleSelectBox = /** @class */ (function (_super) {
                 _this.settingsManager.fontStyle.value = key;
             }
         });
-        // Load initial value
-        if ((_b = this.settingsManager) === null || _b === void 0 ? void 0 : _b.fontStyle.isSet()) {
+        this.initFromSettings();
+    };
+    FontStyleSelectBox.prototype.initFromSettings = function () {
+        var _a;
+        if ((_a = this.settingsManager) === null || _a === void 0 ? void 0 : _a.fontStyle.isSet()) {
             this.selectItem(this.settingsManager.fontStyle.value);
+            this.toggleOverlayClass('fontstyle-' + this.settingsManager.fontStyle.value);
         }
     };
     return FontStyleSelectBox;

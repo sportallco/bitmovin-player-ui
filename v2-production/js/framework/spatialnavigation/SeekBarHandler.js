@@ -61,9 +61,8 @@ var SeekBarHandler = /** @class */ (function () {
         this.scrubSpeedPercentage *= ScrubSpeedMultiplier;
         this.scrubSpeedResetTimeout = window.setTimeout(function () { return (_this.scrubSpeedPercentage = DefaultScrubSpeedPercentage); }, ScrubSpeedClearInterval);
     };
-    SeekBarHandler.prototype.getIncrement = function (direction, seekBarWrapper) {
+    SeekBarHandler.prototype.getIncrement = function (direction, seekBarWidth) {
         this.updateScrubSpeedPercentage();
-        var seekBarWidth = seekBarWrapper.getBoundingClientRect().width;
         var increment = seekBarWidth * this.scrubSpeedPercentage;
         return direction === types_1.Direction.RIGHT ? increment : -increment;
     };
@@ -72,7 +71,18 @@ var SeekBarHandler = /** @class */ (function () {
         this.cursorPosition.y = 0;
     };
     SeekBarHandler.prototype.updateCursorPosition = function (direction, seekBarWrapper) {
-        this.cursorPosition.x += this.getIncrement(direction, seekBarWrapper);
+        // Read the layout once and reuse it for both the increment and the clamp bounds, to avoid two
+        // getBoundingClientRect() reflows per navigation while scrubbing on low-powered TV devices.
+        // Use getBoundingRectFromElement (not getBoundingClientRect directly) so that `x` is also
+        // populated on older TV browsers that only return `left`/`top` - same as initializeCursorPosition.
+        var rect = (0, NavigationAlgorithm_1.getBoundingRectFromElement)(seekBarWrapper);
+        var increment = this.getIncrement(direction, rect.width);
+        var minX = rect.x;
+        var maxX = rect.x + rect.width;
+        // Clamp the cursor position to the seek bar bounds. Without this, holding the remote in one
+        // direction past the start/end keeps moving the (invisible) cursor beyond the seek bar, and the
+        // user then has to "unwind" all that overshoot before scrubbing back the other way has any effect.
+        this.cursorPosition.x = Math.min(Math.max(this.cursorPosition.x + increment, minX), maxX);
     };
     SeekBarHandler.prototype.initializeCursorPosition = function (seekBarWrapper) {
         var playbackPositionMarker = getPlaybackPositionMarker(seekBarWrapper);

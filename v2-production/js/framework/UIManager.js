@@ -35,7 +35,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PlayerWrapper = exports.UIInstanceManager = exports.UIManager = void 0;
+exports.PlayerWrapper = exports.UIInstanceManager = exports.UIManager = exports.UIVariantIdentifier = void 0;
 var UIContainer_1 = require("./components/UIContainer");
 var DOM_1 = require("./DOM");
 var Container_1 = require("./components/Container");
@@ -49,8 +49,26 @@ var FocusVisibilityTracker_1 = require("./utils/FocusVisibilityTracker");
 var MobileV3PlayerAPI_1 = require("./utils/MobileV3PlayerAPI");
 var SubtitleSettingsManager_1 = require("./utils/SubtitleSettingsManager");
 var StorageUtils_1 = require("./utils/StorageUtils");
+var UIPreferencesManager_1 = require("./utils/UIPreferencesManager");
+var TimestampLinkUtils_1 = require("./utils/TimestampLinkUtils");
 var ShadowDomManager_1 = require("./utils/ShadowDomManager");
 var AdBreakTracker_1 = require("./utils/AdBreakTracker");
+var ComponentConfigManager_1 = require("./utils/ComponentConfigManager");
+/**
+ * Identifier for the different {@link UIVariant}s.
+ */
+var UIVariantIdentifier;
+(function (UIVariantIdentifier) {
+    UIVariantIdentifier["main"] = "main";
+    UIVariantIdentifier["ads"] = "ads";
+    UIVariantIdentifier["smallScreen"] = "smallScreen";
+    UIVariantIdentifier["smallScreenAds"] = "smallScreenAds";
+    UIVariantIdentifier["tv"] = "tv";
+    UIVariantIdentifier["tvAds"] = "tvAds";
+    UIVariantIdentifier["subtitle"] = "subtitle";
+    UIVariantIdentifier["castReceiver"] = "castReceiver";
+    UIVariantIdentifier["empty"] = "empty";
+})(UIVariantIdentifier || (exports.UIVariantIdentifier = UIVariantIdentifier = {}));
 var UIManager = /** @class */ (function () {
     function UIManager(player, playerUiOrUiVariants, uiconfig) {
         if (uiconfig === void 0) { uiconfig = {}; }
@@ -72,21 +90,54 @@ var UIManager = /** @class */ (function () {
             this.uiVariants = playerUiOrUiVariants;
         }
         this.subtitleSettingsManager = new SubtitleSettingsManager_1.SubtitleSettingsManager();
+        this.uiPreferencesManager = new UIPreferencesManager_1.UIPreferencesManager();
         this.shadowDomManager = new ShadowDomManager_1.ShadowDomManager();
         this.player = player;
         this.managerPlayerWrapper = new PlayerWrapper(player);
         // ensure that at least the metadata object does exist in the uiconfig
         uiconfig.metadata = uiconfig.metadata ? uiconfig.metadata : {};
-        this.config = __assign(__assign({ playbackSpeedSelectionEnabled: true, autoUiVariantResolve: true, disableAutoHideWhenHovered: false, enableSeekPreview: true, shadowDom: false }, uiconfig), { events: {
+        this.config = __assign(__assign({ playbackSpeedSelectionEnabled: true, autoUiVariantResolve: true, disableAutoHideWhenHovered: false, enableSeekPreview: true, enableTimestampDeepLink: true, shadowDom: false }, uiconfig), { events: {
                 onUpdated: new EventDispatcher_1.EventDispatcher(),
             }, volumeController: new VolumeController_1.VolumeController(this.managerPlayerWrapper.getPlayer()), adBreakTracker: new AdBreakTracker_1.AdBreakTracker(this.managerPlayerWrapper.getPlayer()) });
+        this.recommendationsApi = {
+            add: function (recommendation) {
+                _this.config.metadata.recommendations.push(recommendation);
+                _this.config.events.onUpdated.dispatch(_this);
+            },
+            remove: function (recommendation) {
+                if (ArrayUtils_1.ArrayUtils.remove(_this.config.metadata.recommendations, recommendation) === recommendation) {
+                    _this.config.events.onUpdated.dispatch(_this);
+                    return true;
+                }
+                return false;
+            },
+            list: function () {
+                return __spreadArray([], _this.config.metadata.recommendations, true);
+            },
+        };
+        this.timelineMarkersApi = {
+            add: function (timelineMarker) {
+                _this.config.metadata.markers.push(timelineMarker);
+                _this.config.events.onUpdated.dispatch(_this);
+            },
+            remove: function (timelineMarker) {
+                if (ArrayUtils_1.ArrayUtils.remove(_this.config.metadata.markers, timelineMarker) === timelineMarker) {
+                    _this.config.events.onUpdated.dispatch(_this);
+                    return true;
+                }
+                return false;
+            },
+            list: function () {
+                return __spreadArray([], _this.config.metadata.markers, true);
+            },
+        };
         /**
          * Gathers configuration data from the UI config and player source config and creates a merged UI config
          * that is used throughout the UI instance.
          */
         var updateConfig = function () {
             var playerSourceConfig = player.getSource() || {};
-            _this.config.metadata = JSON.parse(JSON.stringify(uiconfig.metadata || {}));
+            _this.config.metadata = __assign({}, uiconfig.metadata);
             // Extract the UI-related config properties from the source config
             var playerSourceUiConfig = {
                 metadata: {
@@ -102,9 +153,8 @@ var UIManager = /** @class */ (function () {
             // lifetime of the player instance.
             _this.config.metadata.title = playerSourceUiConfig.metadata.title || uiconfig.metadata.title;
             _this.config.metadata.description = playerSourceUiConfig.metadata.description || uiconfig.metadata.description;
-            _this.config.metadata.markers = playerSourceUiConfig.metadata.markers || uiconfig.metadata.markers || [];
-            _this.config.metadata.recommendations =
-                playerSourceUiConfig.metadata.recommendations || uiconfig.metadata.recommendations || [];
+            _this.config.metadata.markers = __spreadArray([], (playerSourceUiConfig.metadata.markers || uiconfig.metadata.markers || []), true);
+            _this.config.metadata.recommendations = __spreadArray([], (playerSourceUiConfig.metadata.recommendations || uiconfig.metadata.recommendations || []), true);
             StorageUtils_1.StorageUtils.setStorageApiDisabled(uiconfig);
         };
         updateConfig();
@@ -112,12 +162,34 @@ var UIManager = /** @class */ (function () {
             i18n_1.i18n.setConfig(this.config.localization);
         }
         this.subtitleSettingsManager.initialize();
+        if (uiconfig.disableStorageApi !== true) {
+            this.uiPreferencesManager.configure(this.player, uiconfig.enablePersistentPreferences === true, uiconfig.showPersistentPreferencesToggle === true);
+        }
+        var wrappedPlayer = this.managerPlayerWrapper.getPlayer();
+        if (this.config.enableTimestampDeepLink) {
+            var isTimestampDeepLinkHandled_1 = false;
+            var seekToTimestampDeepLink_1 = function () {
+                if (isTimestampDeepLinkHandled_1)
+                    return;
+                isTimestampDeepLinkHandled_1 = true;
+                wrappedPlayer.off(_this.player.exports.PlayerEvent.SourceLoaded, seekToTimestampDeepLink_1);
+                if (wrappedPlayer.isLive())
+                    return;
+                var targetTime = TimestampLinkUtils_1.TimestampLinkUtils.parseTimestampFromUrl();
+                if (targetTime != null && targetTime > 0) {
+                    wrappedPlayer.seek(targetTime);
+                }
+            };
+            wrappedPlayer.on(this.player.exports.PlayerEvent.SourceLoaded, seekToTimestampDeepLink_1);
+            // Source may already be loaded by the time the UI is built (e.g. variant switch).
+            if (wrappedPlayer.getSource() != null)
+                seekToTimestampDeepLink_1();
+        }
         // Update the source configuration when a new source is loaded and dispatch onUpdated
         var updateSource = function () {
             updateConfig();
             _this.config.events.onUpdated.dispatch(_this);
         };
-        var wrappedPlayer = this.managerPlayerWrapper.getPlayer();
         wrappedPlayer.on(this.player.exports.PlayerEvent.SourceLoaded, updateSource);
         // The PlaylistTransition event is only available on Mobile v3 for now.
         // This event is fired when a new source becomes active in the player.
@@ -153,7 +225,7 @@ var UIManager = /** @class */ (function () {
                 uiVariantsWithoutCondition.push(uiVariant);
             }
             // Create the instance manager for a UI variant
-            this.uiInstanceManagers.push(new InternalUIInstanceManager(player, uiVariant.ui, this.config, this.subtitleSettingsManager, this.uiWrapperElement, uiVariant.spatialNavigation));
+            this.uiInstanceManagers.push(new InternalUIInstanceManager(player, uiVariant, this.config, this.subtitleSettingsManager, this.uiPreferencesManager, this.uiWrapperElement));
         }
         // Make sure that there is only one UI variant without a condition
         // It does not make sense to have multiple variants without condition, because only the first one in the list
@@ -290,25 +362,31 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.getSubtitleSettingsManager = function () {
         return this.subtitleSettingsManager;
     };
+    UIManager.prototype.getUIPreferencesManager = function () {
+        return this.uiPreferencesManager;
+    };
     UIManager.prototype.getConfig = function () {
         return this.config;
     };
     /**
      * Returns the list of UI variants as passed into the constructor of {@link UIManager}.
-     * @returns {UIVariant[]} the list of available UI variants
+     * @returns {Array<UIVariant | UIVariantFactory>} the list of available UI variants
      */
     UIManager.prototype.getUiVariants = function () {
         return this.uiVariants;
     };
     /**
      * Switches to a UI variant from the list returned by {@link getUiVariants}.
-     * @param {UIVariant} uiVariant the UI variant to switch to
+     * @param {UIVariant | UIVariantFactory} uiVariant or UIVariantFactory the UI variant to switch to
      * @param {() => void} onShow a callback that is executed just before the new UI variant is shown
      */
     UIManager.prototype.switchToUiVariant = function (uiVariant, onShow) {
         var uiVariantIndex = this.uiVariants.indexOf(uiVariant);
-        var previousUi = this.currentUi;
         var nextUi = this.uiInstanceManagers[uiVariantIndex];
+        this.switchToUiInstance(nextUi, onShow);
+    };
+    UIManager.prototype.switchToUiInstance = function (nextUi, onShow) {
+        var previousUi = this.currentUi;
         // Determine if the UI variant is changing
         // Only if the UI variant is changing, we need to do some stuff. Else we just leave everything as-is.
         if (nextUi === this.currentUi) {
@@ -318,7 +396,9 @@ var UIManager = /** @class */ (function () {
         }
         // Hide the currently active UI variant
         if (this.currentUi) {
-            this.currentUi.getUI().hide();
+            var currentUiContainer_1 = this.currentUi.resolveUI();
+            this.currentUi.onInactive.dispatch(currentUiContainer_1);
+            currentUiContainer_1.hide();
         }
         // Assign the new UI variant as current UI
         this.currentUi = nextUi;
@@ -327,18 +407,20 @@ var UIManager = /** @class */ (function () {
         if (this.currentUi == null) {
             return;
         }
+        var currentUiContainer = this.currentUi.resolveUI();
         // Add the UI to the DOM (and configure it) the first time it is selected
         if (!this.currentUi.isConfigured()) {
             this.addUi(this.currentUi);
             // ensure that the internal state is ready for the upcoming show call
-            if (!this.currentUi.getUI().isHidden()) {
-                this.currentUi.getUI().hide();
+            if (!currentUiContainer.isHidden()) {
+                currentUiContainer.hide();
             }
         }
         if (onShow) {
             onShow();
         }
-        this.currentUi.getUI().show();
+        currentUiContainer.show();
+        this.currentUi.onActive.dispatch(currentUiContainer);
         this.events.onActiveUiChanged.dispatch(this, { previousUi: previousUi, currentUi: nextUi });
     };
     /**
@@ -367,21 +449,23 @@ var UIManager = /** @class */ (function () {
         var switchingContext = __assign(__assign({}, defaultContext), context);
         // Fire the event and allow modification of the context before it is used to resolve the UI variant
         this.events.onUiVariantResolve.dispatch(this, switchingContext);
-        var nextUiVariant = null;
+        var nextUi = null;
         // Select new UI variant
         // If no variant condition is fulfilled, we switch to *no* UI
-        for (var _i = 0, _a = this.uiVariants; _i < _a.length; _i++) {
-            var uiVariant = _a[_i];
-            var matchesCondition = uiVariant.condition == null || uiVariant.condition(switchingContext) === true;
-            if (nextUiVariant == null && matchesCondition) {
-                nextUiVariant = uiVariant;
+        for (var _i = 0, _a = this.uiInstanceManagers; _i < _a.length; _i++) {
+            var uiInstanceManager = _a[_i];
+            var matchesCondition = uiInstanceManager.conditionResolver == null || uiInstanceManager.conditionResolver(switchingContext) === true;
+            if (nextUi == null && matchesCondition) {
+                nextUi = uiInstanceManager;
             }
             else {
                 // hide all UIs besides the one which should be active
-                uiVariant.ui.hide();
+                if (uiInstanceManager.isUIResolved()) {
+                    uiInstanceManager.getUI().hide();
+                }
             }
         }
-        this.switchToUiVariant(nextUiVariant, function () {
+        this.switchToUiInstance(nextUi, function () {
             if (onShow) {
                 onShow(switchingContext);
             }
@@ -400,7 +484,8 @@ var UIManager = /** @class */ (function () {
         configurable: true
     });
     UIManager.prototype.addUi = function (ui) {
-        var dom = ui.getUI().getDomElement();
+        var uiContainer = ui.resolveUI();
+        var dom = uiContainer.getDomElement();
         var player = ui.getWrappedPlayer();
         ui.configureControls();
         /* Append the UI DOM after configuration to avoid CSS transitions at initialization
@@ -428,6 +513,9 @@ var UIManager = /** @class */ (function () {
     };
     UIManager.prototype.releaseUi = function (ui) {
         ui.releaseControls();
+        if (!ui.isUIResolved()) {
+            return;
+        }
         var uiContainer = ui.getUI();
         if (uiContainer.hasDomElement()) {
             uiContainer.getDomElement().remove();
@@ -436,11 +524,16 @@ var UIManager = /** @class */ (function () {
     };
     UIManager.prototype.release = function () {
         this.config.adBreakTracker.release();
+        if (this.currentUi) {
+            this.currentUi.onInactive.dispatch(this.currentUi.getUI());
+            this.currentUi = null;
+        }
         for (var _i = 0, _a = this.uiInstanceManagers; _i < _a.length; _i++) {
             var uiInstanceManager = _a[_i];
             this.releaseUi(uiInstanceManager);
         }
         this.managerPlayerWrapper.clearEventHandlers();
+        this.uiPreferencesManager.release();
         this.focusVisibilityTracker.release();
         this.shadowDomManager.release();
     };
@@ -478,30 +571,51 @@ var UIManager = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(UIManager.prototype, "recommendations", {
+        /**
+         * API for managing recommendations displayed by the {@link RecommendationOverlay}.
+         */
+        get: function () {
+            return this.recommendationsApi;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(UIManager.prototype, "timelineMarkers", {
+        /**
+         * API for managing markers displayed on the playback timeline.
+         */
+        get: function () {
+            return this.timelineMarkersApi;
+        },
+        enumerable: false,
+        configurable: true
+    });
     /**
      * Returns the list of all added markers in undefined order.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.list} instead.
      */
     UIManager.prototype.getTimelineMarkers = function () {
-        return this.config.metadata.markers;
+        return this.timelineMarkers.list();
     };
     /**
      * Adds a marker to the timeline. Does not check for duplicates/overlaps at the `time`.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.add} instead.
      */
     UIManager.prototype.addTimelineMarker = function (timelineMarker) {
-        this.config.metadata.markers.push(timelineMarker);
-        this.config.events.onUpdated.dispatch(this);
+        this.timelineMarkers.add(timelineMarker);
     };
     /**
      * Removes a marker from the timeline (by reference) and returns `true` if the marker has
      * been part of the timeline and successfully removed, or `false` if the marker could not
      * be found and thus not removed.
+     *
+     * @deprecated Use {@link TimelineMarkersApi.remove} instead.
      */
     UIManager.prototype.removeTimelineMarker = function (timelineMarker) {
-        if (ArrayUtils_1.ArrayUtils.remove(this.config.metadata.markers, timelineMarker) === timelineMarker) {
-            this.config.events.onUpdated.dispatch(this);
-            return true;
-        }
-        return false;
+        return this.timelineMarkers.remove(timelineMarker);
     };
     return UIManager;
 }());
@@ -510,9 +624,11 @@ exports.UIManager = UIManager;
  * Encapsulates functionality to manage a UI instance. Used by the {@link UIManager} to manage multiple UI instances.
  */
 var UIInstanceManager = /** @class */ (function () {
-    function UIInstanceManager(player, ui, config, subtitleSettingsManager, uiWrapperElement, spatialNavigation) {
+    function UIInstanceManager(player, uiVariant, config, subtitleSettingsManager, uiPreferencesManager, uiWrapperElement) {
         this.events = {
             onConfigured: new EventDispatcher_1.EventDispatcher(),
+            onActive: new EventDispatcher_1.EventDispatcher(),
+            onInactive: new EventDispatcher_1.EventDispatcher(),
             onSeek: new EventDispatcher_1.EventDispatcher(),
             onSeekPreview: new EventDispatcher_1.EventDispatcher(),
             onSeeked: new EventDispatcher_1.EventDispatcher(),
@@ -526,21 +642,61 @@ var UIInstanceManager = /** @class */ (function () {
             onBufferingShow: new EventDispatcher_1.EventDispatcher(),
             onBufferingHide: new EventDispatcher_1.EventDispatcher(),
         };
+        if (typeof uiVariant.ui === 'function' && uiVariant.spatialNavigation) {
+            throw Error('Lazy UI variants must return spatialNavigation from the ui factory');
+        }
         this.playerWrapper = new PlayerWrapper(player);
-        this.ui = ui;
+        this.uiVariant = uiVariant;
         this.config = config;
         this.subtitleSettingsManager = subtitleSettingsManager;
+        this.uiPreferencesManager = uiPreferencesManager;
         this.uiWrapperElement = uiWrapperElement;
-        this.spatialNavigation = spatialNavigation;
+        if (typeof uiVariant.ui !== 'function') {
+            this.uiContainer = uiVariant.ui;
+            this.spatialNavigation = uiVariant.spatialNavigation;
+        }
     }
     UIInstanceManager.prototype.getSubtitleSettingsManager = function () {
         return this.subtitleSettingsManager;
     };
+    UIInstanceManager.prototype.getUIPreferencesManager = function () {
+        return this.uiPreferencesManager;
+    };
     UIInstanceManager.prototype.getConfig = function () {
         return this.config;
     };
+    Object.defineProperty(UIInstanceManager.prototype, "conditionResolver", {
+        get: function () {
+            return this.uiVariant.condition;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    UIInstanceManager.prototype.resolveUI = function () {
+        if (this.uiContainer) {
+            return this.uiContainer;
+        }
+        if (typeof this.uiVariant.ui === 'function') {
+            var resolved = ComponentConfigManager_1.ComponentConfigManager.run(this.config.componentConfigOverrides, this.uiVariant.identifier, this.uiVariant.ui);
+            if (resolved instanceof UIContainer_1.UIContainer) {
+                this.uiContainer = resolved;
+            }
+            else {
+                this.uiContainer = resolved.ui;
+                this.spatialNavigation = resolved.spatialNavigation;
+            }
+        }
+        else {
+            this.uiContainer = this.uiVariant.ui;
+        }
+        return this.uiContainer;
+    };
     UIInstanceManager.prototype.getUI = function () {
-        return this.ui;
+        // Keep getUI() resolving lazily for existing integrations that expect it to always return a UIContainer.
+        return this.resolveUI();
+    };
+    UIInstanceManager.prototype.isUIResolved = function () {
+        return this.uiContainer != null;
     };
     UIInstanceManager.prototype.getPlayer = function () {
         return this.playerWrapper.getPlayer();
@@ -552,6 +708,28 @@ var UIInstanceManager = /** @class */ (function () {
          */
         get: function () {
             return this.events.onConfigured;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(UIInstanceManager.prototype, "onActive", {
+        /**
+         * Fires when this UI instance becomes the active UI variant.
+         * @returns {EventDispatcher}
+         */
+        get: function () {
+            return this.events.onActive;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(UIInstanceManager.prototype, "onInactive", {
+        /**
+         * Fires when this UI instance stops being the active UI variant.
+         * @returns {EventDispatcher}
+         */
+        get: function () {
+            return this.events.onInactive;
         },
         enumerable: false,
         configurable: true

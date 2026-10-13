@@ -22,6 +22,7 @@ var EventDispatcher_1 = require("../../EventDispatcher");
 var Timeout_1 = require("../../utils/Timeout");
 var Label_1 = require("../labels/Label");
 var i18n_1 = require("../../localization/i18n");
+var PlayerUtils_1 = require("../../utils/PlayerUtils");
 /**
  * Overlays the player and detects touch input
  */
@@ -65,10 +66,32 @@ var TouchControlOverlay = /** @class */ (function (_super) {
     }
     TouchControlOverlay.prototype.configure = function (player, uimanager) {
         var _this = this;
+        var _a;
         _super.prototype.configure.call(this, player, uimanager);
         var playerSeekTime = 0;
         var startSeekTime = 0;
-        this.doubleTapTimeout = new Timeout_1.Timeout(this.config.seekDoubleTapTimeout, function () {
+        // Returns the current playback position in the domain we seek in:
+        // - live streams are seeked through the DVR window via timeShift (0 = live edge, negative = past)
+        // - VOD streams are seeked via the absolute current time
+        var getSeekStartPosition = function () {
+            return player.isLive() ? player.getTimeShift() : player.getCurrentTime();
+        };
+        // Seeks to the given target, clamped to the valid range, using the correct API for the stream type.
+        // On live this uses timeShift() (VOD's seek() has no effect on live streams), which is why the
+        // quick seek had no effect on lives before.
+        var seekToTarget = function (target) {
+            if (player.isLive()) {
+                var clampedValue = PlayerUtils_1.PlayerUtils.clampValueToRange(target, player.getMaxTimeShift(), 0);
+                player.timeShift(clampedValue);
+                return clampedValue;
+            }
+            else {
+                var clampedValue = PlayerUtils_1.PlayerUtils.clampValueToRange(target, 0, player.getDuration());
+                player.seek(clampedValue);
+                return clampedValue;
+            }
+        };
+        this.doubleTapTimeout = new Timeout_1.Timeout((_a = this.config.seekDoubleTapTimeout) !== null && _a !== void 0 ? _a : 0, function () {
             _this.couldBeDoubleTapping = false;
             startSeekTime = 0;
             setTimeout(function () { return _this.hideSeekAnimationElements(); }, 150);
@@ -102,8 +125,8 @@ var TouchControlOverlay = /** @class */ (function (_super) {
             }
         });
         this.touchControlEvents.onSeekBackward.subscribe(function () {
-            playerSeekTime -= _this.config.seekTime;
-            player.seek(playerSeekTime);
+            var _a;
+            playerSeekTime = seekToTarget(playerSeekTime - ((_a = _this.config.seekTime) !== null && _a !== void 0 ? _a : 0));
             _this.seekBackwardLabel.setText(Math.abs(Math.round(playerSeekTime - startSeekTime)) +
                 ' ' +
                 i18n_1.i18n.performLocalization(i18n_1.i18n.getLocalizer('settings.time.seconds')));
@@ -113,8 +136,8 @@ var TouchControlOverlay = /** @class */ (function (_super) {
             _this.getDomElement().removeClass(_this.prefixCss(_this.SEEK_FORWARD_CLASS));
         });
         this.touchControlEvents.onSeekForward.subscribe(function () {
-            playerSeekTime += _this.config.seekTime;
-            player.seek(playerSeekTime);
+            var _a;
+            playerSeekTime = seekToTarget(playerSeekTime + ((_a = _this.config.seekTime) !== null && _a !== void 0 ? _a : 0));
             _this.seekForwardLabel.setText(Math.abs(Math.round(playerSeekTime - startSeekTime)) +
                 ' ' +
                 i18n_1.i18n.performLocalization(i18n_1.i18n.getLocalizer('settings.time.seconds')));
@@ -125,7 +148,7 @@ var TouchControlOverlay = /** @class */ (function (_super) {
         });
         this.touchControlEvents.onSingleClick.subscribe(function (_, e) {
             uimanager.getUI().toggleUiShown();
-            playerSeekTime = player.getCurrentTime();
+            playerSeekTime = getSeekStartPosition();
             startSeekTime = playerSeekTime;
             var eventTarget = e.target;
             var rect = eventTarget.getBoundingClientRect();

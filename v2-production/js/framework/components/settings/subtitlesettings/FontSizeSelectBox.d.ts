@@ -12,4 +12,5 @@ export declare class FontSizeSelectBox extends SubtitleSettingSelectBox {
     private populateItemsWithFilter;
     reapplyFilterAndReload(): void;
     configure(player: PlayerAPI, uimanager: UIInstanceManager): void;
+    private initFromSettings;
 }

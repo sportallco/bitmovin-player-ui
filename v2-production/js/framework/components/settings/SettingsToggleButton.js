@@ -33,23 +33,38 @@ var SettingsToggleButton = /** @class */ (function (_super) {
         if (!config.settingsPanel) {
             throw new Error('Required SettingsPanel is missing');
         }
+        // Setting both ariaLabels on the parent ToggleButton suppresses its default
+        // `aria-pressed` attribute (see the ToggleButtonConfig.ariaLabel doc) so we don't end
+        // up announcing both pressed/unpressed *and* expanded/collapsed for the same widget.
+        // Using the same localizer for both states keeps the announced name stable.
+        var settingsLabel = i18n_1.i18n.getLocalizer('settings');
         _this.config = _this.mergeConfig(config, {
             cssClass: 'ui-settingstogglebutton',
-            text: i18n_1.i18n.getLocalizer('settings'),
+            text: settingsLabel,
+            onAriaLabel: settingsLabel,
+            offAriaLabel: settingsLabel,
             settingsPanel: null,
             autoHideWhenNoActiveSettings: true,
-            role: 'pop-up button',
         }, _this.config);
-        /**
-         * WCAG20 standard defines which popup menu (element id) is owned by the button
-         */
-        _this.getDomElement().attr('aria-owns', config.settingsPanel.getActivePage().getConfig().id);
-        /**
-         * WCAG20 standard defines that a button has a popup menu bound to it
-         */
-        _this.getDomElement().attr('aria-haspopup', 'true');
+        // The element renders as a native `<button>` (with the explicit `role="button"`
+        // inherited from the Button base). aria-haspopup="menu" advertises that activation
+        // reveals a menu, and aria-controls points assistive tech at the panel id, which
+        // is refreshed whenever the panel's active page changes (see `configure`).
+        // We intentionally do not set aria-owns: when it points at the same element as
+        // aria-controls, iOS VoiceOver follows both relationships and announces the menu
+        // twice. The WAI-ARIA APG menu button pattern uses aria-controls alone.
+        _this.getDomElement().attr('aria-haspopup', 'menu');
+        _this.updateAriaPanelIdRefs();
+        _this.getDomElement().attr('aria-expanded', 'false');
         return _this;
     }
+    SettingsToggleButton.prototype.updateAriaPanelIdRefs = function () {
+        var settingsPanel = this.getConfig().settingsPanel;
+        if (!settingsPanel)
+            return;
+        var settingsPanelId = settingsPanel.getActivePage().getConfig().id;
+        this.getDomElement().attr('aria-controls', settingsPanelId);
+    };
     SettingsToggleButton.prototype.configure = function (player, uimanager) {
         var _this = this;
         _super.prototype.configure.call(this, player, uimanager);
@@ -61,22 +76,33 @@ var SettingsToggleButton = /** @class */ (function (_super) {
                 // Hide all open SettingsPanels before opening this button's panel
                 // (We need to iterate a copy because hiding them will automatically remove themselves from the array
                 // due to the subscribeOnce above)
-                _this.visibleSettingsPanels.slice().forEach(function (settingsPanel) { return settingsPanel.hide(); });
+                _this.visibleSettingsPanels
+                    .slice()
+                    .filter(function (settingsPanel) { return settingsPanel.getConfig().hideOnOtherSettingsPanelOpening; })
+                    .forEach(function (settingsPanel) { return settingsPanel.hide(); });
             }
             settingsPanel.toggleHidden();
         });
         settingsPanel.onShow.subscribe(function () {
             // Set toggle status to on when the settings panel shows
             _this.on();
+            _this.getDomElement().attr('aria-expanded', 'true');
         });
         settingsPanel.onHide.subscribe(function () {
             // Set toggle status to off when the settings panel hides
             _this.off();
+            _this.getDomElement().attr('aria-expanded', 'false');
         });
+        // Keep aria-controls / aria-owns pointing at the *currently* active page id —
+        // the user may navigate into sub-pages while the panel is open.
+        settingsPanel.onActivePageChanged.subscribe(function () { return _this.updateAriaPanelIdRefs(); });
+        // Sync aria-expanded with the panel's current visibility in case the panel was
+        // already shown before `configure()` ran (`hidden: false`, manual `show()`, etc.).
+        this.getDomElement().attr('aria-expanded', settingsPanel.isShown() ? 'true' : 'false');
         // Ensure that only one `SettingPanel` is visible at once
         // Keep track of shown SettingsPanels
         uimanager.onComponentShow.subscribe(function (sender) {
-            if (sender instanceof SettingsPanel_1.SettingsPanel) {
+            if (sender instanceof SettingsPanel_1.SettingsPanel && sender.getConfig().hideOnOtherSettingsPanelOpening) {
                 _this.visibleSettingsPanels.push(sender);
                 sender.onHide.subscribeOnce(function () { return ArrayUtils_1.ArrayUtils.remove(_this.visibleSettingsPanels, sender); });
             }

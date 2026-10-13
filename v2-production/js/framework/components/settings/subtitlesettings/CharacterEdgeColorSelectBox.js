@@ -60,7 +60,9 @@ var CharacterEdgeColorSelectBox = /** @class */ (function (_super) {
         this.settingsManager.characterEdgeColor.onChanged.subscribe(function (sender, property) {
             _this.selectItem(property.value);
         });
-        // Load initial value
+        this.initFromSettings();
+    };
+    CharacterEdgeColorSelectBox.prototype.initFromSettings = function () {
         if (this.settingsManager.characterEdgeColor.isSet()) {
             this.selectItem(this.settingsManager.characterEdgeColor.value);
         }
